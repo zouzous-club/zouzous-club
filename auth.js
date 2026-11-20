@@ -256,10 +256,13 @@ $('resetForm').addEventListener('submit', async (event) => {
         redirectTo: `${window.location.origin}${window.location.pathname}?recovery=1`
     });
 
-    message(
-        error ? 'Demande impossible.' : 'Si le compte existe, un e-mail a été envoyé.',
-        Boolean(error)
-    );
+    if (error) {
+        const code = error.code || `HTTP ${error.status || 'inconnu'}`;
+        message(`Demande impossible (${code}) : ${error.message || 'Erreur Supabase'}`, true);
+        return;
+    }
+
+    message('Si le compte existe, un e-mail a été envoyé.');
 });
 
 $('forgotButton').addEventListener('click', () => {
