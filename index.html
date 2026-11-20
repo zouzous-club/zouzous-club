@@ -17,6 +17,7 @@
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
 		<link href="./styles.css" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
+		<link href="./profil.css" rel="stylesheet"/>
 	</head>
 	<body>
 		<section class="auth-screen" id="authScreen">
@@ -115,7 +116,12 @@
 				</div>
 				<div aria-live="polite" id="content">
 				</div>
-				<section class="card" hidden="" id="memberPanel" style="margin-top:20px">
+				<section id="profilePage" class="profile-page" hidden>
+					<section class="card profile-intro">
+						<h3>Mon profil</h3>
+						<p>Retrouvez votre compte personnel et les informations de votre groupe au même endroit.</p>
+					</section>
+					<section class="card" id="memberPanel" hidden>
 					<h3>
 						🔐 Membres et accès
 					</h3>
@@ -155,6 +161,7 @@
 					<button class="btn secondary" id="logoutButton" type="button">
 						Se déconnecter
 					</button>
+					</section>
 				</section>
 			</main>
 		</div>
@@ -162,6 +169,7 @@
 		</nav>
 		<script defer="" src="./app.js">
 		</script>
+		<script defer src="./profil.js"></script>
 		<script src="./auth.js" type="module">
 		</script>
 	</body>
