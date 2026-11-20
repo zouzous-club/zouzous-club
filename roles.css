@@ -1,0 +1,44 @@
+/* Correctif ciblé du choix de rôle : ne modifie pas les autres formulaires. */
+#inviteForm .invitation-roles {
+    box-sizing: border-box;
+    min-width: 0;
+    margin: 10px 0 16px;
+    padding: 12px 16px;
+    border: 1px solid #d9d0e8;
+    border-radius: 12px;
+}
+
+#inviteForm .invitation-roles legend {
+    padding: 0 6px;
+    font-weight: 600;
+}
+
+#inviteForm .invitation-role-choice {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: 10px 4px;
+    cursor: pointer;
+}
+
+#inviteForm .invitation-role-choice input[type="radio"] {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin: 0;
+    padding: 0;
+    accent-color: #845EC2;
+}
+
+#inviteForm .invitation-role-choice span {
+    display: inline;
+    width: auto;
+    margin: 0;
+    line-height: 1.4;
+}
