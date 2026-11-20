@@ -1,249 +1,157 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#845EC2">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Zouzous Club — Espace privé</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon-180.png">
-  <style>
-    :root {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#252238;background:#FFFAFD;font-synthesis:none}
-    *{box-sizing:border-box}body{margin:0}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #b3a8ef;outline-offset:2px}
-    [hidden]{display:none!important}.auth-screen{min-height:100dvh;display:grid;place-items:center;padding:24px}.auth-card{width:min(100%,440px);background:white;border:1px solid #eae8f1;border-radius:22px;padding:30px;box-shadow:0 15px 45px #27204812}.auth-card h1{color:#7043AD;margin:0 0 6px}.auth-card form{display:grid;gap:12px;margin-top:20px}.auth-card label{display:grid;gap:6px;font-size:14px;font-weight:600}.auth-card input{width:100%;padding:12px;border:1px solid #d9d5e5;border-radius:10px}.auth-card button{width:100%}.auth-link{background:none;border:0;color:#7043AD;padding:12px}.auth-message{min-height:24px;font-size:13px;margin-top:12px}.shell{max-width:1180px;margin:auto;min-height:100dvh;display:grid;grid-template-columns:230px minmax(0,1fr)}aside{padding:30px 18px;background:#fff;border-right:1px solid #e9e7f1}aside h1{margin:0 0 28px;font-size:25px;color:#7043AD}.nav{display:flex;flex-direction:column;gap:8px}.nav button{border:0;background:transparent;text-align:left;padding:13px 15px;border-radius:13px;color:#514d62}.nav button.active{background:#F1E8FA;color:#7043AD;font-weight:700}
-    main{padding:30px 34px 90px;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.top h2{margin:0;font-size:29px}.sub{color:#716e7d;font-size:14px}.pill{background:#F1E8FA;color:#7043AD;border-radius:30px;padding:8px 12px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:white;border:1px solid #eae8f1;border-radius:18px;padding:19px;box-shadow:0 3px 14px #27204806}.card h3{margin:0 0 12px;font-size:17px}.card p{margin:7px 0;color:#686476}.wide{grid-column:1/-1}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.btn{border:0;background:#845EC2;color:white;border-radius:11px;padding:10px 15px;font-weight:600}.btn.secondary{background:#F1E8FA;color:#7043AD}.btn.danger{background:#fff0f0;color:#a72e43}.muted{color:#777287}.item{padding:13px 0;border-top:1px solid #f0edf4}.item:first-of-type{border-top:0}.item strong{display:block}.item small{color:#797487}.form{display:grid;gap:12px}.form label{font-weight:600;font-size:14px}.form input,.form textarea,.form select{width:100%;border:1px solid #d9d5e5;border-radius:10px;padding:11px;background:#fff;color:#252238}.form textarea{min-height:90px;resize:vertical}.form button{justify-self:start}.tag{font-size:12px;background:#f2f0fa;padding:5px 9px;border-radius:20px;color:#5e538a}.empty{padding:20px;color:#777287;text-align:center;background:#faf9fe;border-radius:12px}.notice{padding:12px 15px;border-radius:12px;background:#fff7df;color:#735b22;font-size:13px;margin-bottom:20px}.tabs{display:none}.check{display:flex;align-items:center;gap:10px;padding:8px 0}.check input{width:18px;height:18px;accent-color:#845EC2}.votes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.vote{border:1px solid #ddd7f6;border-radius:10px;background:white;padding:8px 10px}.vote.selected{background:#845EC2;color:white}.section-title{margin:24px 0 12px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.day{background:#f6f4fc;border-radius:8px;padding:8px 4px;text-align:center;min-height:42px;font-size:13px}.day.has{background:#EBD9F7;color:#7043AD;font-weight:700}.day.head{background:transparent;min-height:25px;font-weight:700}.day.blank{background:transparent}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-    @media(max-width:760px){.shell{display:block}aside{display:none}main{padding:22px 16px 100px}.top h2{font-size:24px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;gap:3px;padding:9px 5px calc(9px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e8e5ef;z-index:3}.tabs button{flex:1;border:0;background:none;color:#777287;font-size:11px;padding:7px 1px}.tabs button.active{color:#7043AD;font-weight:700}.tabs span{display:block;font-size:21px;margin-bottom:3px}}
-  
-    .brand-heading { display: flex; align-items: center; gap: 12px; }
-    .brand-logo { width: 54px; height: 54px; object-fit: contain; flex: 0 0 auto; }
-    aside .brand-logo { width: 46px; height: 46px; }
-    /* Zouzous Club : identité visuelle, responsive et accessible. */
-    :root {
-      --violet: #845EC2;
-      --pink: #D65DB1;
-      --coral: #FF6F91;
-      --peach: #FF9671;
-      --gold: #FFC75F;
-      --lemon: #F9F871;
-      --rainbow: linear-gradient(110deg, #845EC2 0%, #D65DB1 20%, #FF6F91 40%, #FF9671 60%, #FFC75F 80%, #F9F871 100%);
-    }
-    body { background: #FFFAFD; }
-    .auth-screen { background: linear-gradient(145deg, #F3EAFE 0%, #FFF4F8 48%, #FFF7E6 100%); }
-    .auth-card { border-top: 7px solid var(--violet); box-shadow: 0 20px 65px #845EC21A; }
-    .auth-card::before { content: ''; display: block; height: 8px; border-radius: 20px; background: var(--rainbow); margin-bottom: 22px; }
-    .auth-card h1 { color: #58308D; }
-    aside { border-top: 7px solid transparent; border-image: var(--rainbow) 1; }
-    aside h1 { color: #58308D; }
-    .top { border-bottom: 5px solid transparent; border-image: var(--rainbow) 1; padding-bottom: 16px; }
-    .btn:not(.secondary):not(.danger) { background: #845EC2; }
-    .btn:not(.secondary):not(.danger):hover { background: #6E43AC; }
-    .nav button.active { border-left: 4px solid var(--pink); }
-    .card { border-color: #EEE6F3; }
-    .card:nth-child(6n + 1) { border-top: 4px solid var(--violet); }
-    .card:nth-child(6n + 2) { border-top: 4px solid var(--pink); }
-    .card:nth-child(6n + 3) { border-top: 4px solid var(--coral); }
-    .card:nth-child(6n + 4) { border-top: 4px solid var(--peach); }
-    .card:nth-child(6n + 5) { border-top: 4px solid var(--gold); }
-    .card:nth-child(6n) { border-top: 4px solid var(--lemon); }
-    .pill { background: #F3E8FA; color: #58308D; }
-    .tabs { border-top: 4px solid transparent; border-image: var(--rainbow) 1; }
-    @media (prefers-reduced-motion: no-preference) {
-      .btn, .nav button, .tabs button { transition: background-color 150ms ease, color 150ms ease; }
-    }
-  </style>
-</head>
-<body>
-  <section id="authScreen" class="auth-screen">
-    <div class="auth-card">
-      <h1 class="brand-heading"><img class="brand-logo" src="icon.svg" alt="" width="54" height="54"> <span>Zouzous Club</span></h1>
-      <p class="sub">Un espace réservé aux amis invités.</p>
-      <div id="authLogin" data-auth-view>
-        <form id="loginForm">
-          <label>Adresse e-mail<input type="email" name="email" autocomplete="username" required></label>
-          <label>Mot de passe<input type="password" name="password" autocomplete="current-password" required></label>
-          <button class="btn" type="submit">Se connecter</button>
-        </form>
-        <button id="forgotButton" class="auth-link" type="button">Mot de passe oublié ?</button>
-      </div>
-      <div id="authPassword" data-auth-view hidden>
-        <p>Définissez votre mot de passe personnel pour activer ou récupérer votre compte.</p>
-        <form id="passwordForm">
-          <label>Nouveau mot de passe (12 caractères minimum)<input type="password" name="password" minlength="12" autocomplete="new-password" required></label>
-          <button class="btn" type="submit">Enregistrer le mot de passe</button>
-        </form>
-      </div>
-      <div id="authReset" data-auth-view hidden>
-        <form id="resetForm">
-          <label>Adresse e-mail<input type="email" name="email" required></label>
-          <button class="btn" type="submit">Recevoir un lien de réinitialisation</button>
-        </form>
-        <button id="backButton" class="auth-link" type="button">Retour à la connexion</button>
-      </div>
-      <div id="authPending" data-auth-view hidden><p>Accès en attente. Contactez l'administrateur du groupe.</p></div>
-      <p id="authMessage" class="auth-message" role="status"></p>
-    </div>
-  </section>
-  <div class="shell" hidden>
-    <aside><h1 class="brand-heading"><img class="brand-logo" src="icon.svg" alt="" width="46" height="46"> <span>Zouzous Club</span></h1><nav class="nav" id="desktopNav" aria-label="Navigation principale"></nav></aside>
-    <main>
-      <div class="top"><div><h2 id="pageTitle">Accueil</h2><div class="sub">Votre espace privé entre amis</div></div><span class="pill">Espace privé</span></div>
-      <div class="notice">Connexion et gestion des membres sécurisées par Supabase. Les modules Agenda, Sondages et Partage restent des démonstrations locales, non synchronisées entre amis : ne saisissez pas de données confidentielles.</div>
-      <div id="content" aria-live="polite"></div>
-      <section class="card" id="memberPanel" hidden style="margin-top:20px">
-        <h3>🔐 Membres et accès</h3>
-        <p id="memberStatus"></p><p id="memberRole"></p>
-        <div id="membersList"></div>
-        <div id="invitePanel" hidden>
-          <h3>Inviter un ami</h3>
-          <form id="inviteForm" class="form">
-            <label>Adresse e-mail<input name="email" type="email" required></label>
-            <button class="btn" type="submit">Envoyer l'invitation</button>
-          </form>
-          <p id="inviteMessage" role="status"></p>
-        </div>
-        <button id="logoutButton" class="btn secondary" type="button">Se déconnecter</button>
-      </section>
-    </main>
-  </div>
-  <nav class="tabs" id="mobileNav" aria-label="Navigation mobile"></nav>
-  <script>
-    'use strict';
-    const pages = [
-      {id:'accueil',label:'Accueil',icon:'⌂'},
-      {id:'agenda',label:'Agenda',icon:'▦'},
-      {id:'organiser',label:'Organiser',icon:'◉'},
-      {id:'partage',label:'Partage',icon:'☷'},
-      {id:'groupe',label:'Groupe',icon:'♧'}
-    ];
-    const storageKey = 'entre-nous-prototype-v1';
-    const initial = {events:[],polls:[],notes:[],tasks:[],ideas:[],expenses:[],birthdays:[],albums:[]};
-    let state;
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      state = Object.fromEntries(Object.keys(initial).map(key => [key,Array.isArray(saved[key]) ? saved[key] : []]));
-    } catch (error) {
-      state = structuredClone(initial);
-    }
-    let page = 'accueil';
-    const $ = id => document.getElementById(id);
-    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
-    const uid = () => crypto.randomUUID();
-    const save = () => localStorage.setItem(storageKey,JSON.stringify(state));
-    const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '';
-    const item = (title,detail,actions='') => `<div class="item row"><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></div>${actions}</div>`;
-    const empty = label => `<div class="empty">${escapeHtml(label)}</div>`;
-    const card = (title,body,wide=false) => `<section class="card${wide?' wide':''}"><h3>${title}</h3>${body}</section>`;
-    const input = (label,name,type='text',required=true) => `<label>${label}<input name="${name}" type="${type}" ${required?'required':''}></label>`;
-    const form = (kind,fields,label='Ajouter') => `<form class="form" data-form="${kind}">${fields}<button class="btn" type="submit">${label}</button></form>`;
-    const removeButton = (kind,id) => `<button class="btn danger" data-remove="${kind}" data-id="${id}" aria-label="Supprimer">Supprimer</button>`;
-    const upcoming = () => [...state.events].filter(event=>event.date>=new Date().toLocaleDateString('en-CA')).sort((a,b)=>a.date.localeCompare(b.date));
-    function home() {
-      const next = upcoming().slice(0,3);
-      const openPolls = state.polls.filter(poll=>!poll.closed);
-      return `<div class="grid">${card('📅 Prochains événements',next.length?next.map(event=>item(event.title,dateLabel(event.date))).join(''):empty('Aucun événement à venir'))}${card('🗳️ Sondages ouverts',openPolls.length?openPolls.map(poll=>item(poll.title,`${poll.options.length} propositions`)).join(''):empty('Aucun sondage en cours'))}${card('📝 Pense-bêtes',state.notes.slice(-3).reverse().map(note=>item(note.title,note.text)).join('')||empty('Aucune note'))}${card('✅ Tâches à faire',state.tasks.filter(task=>!task.done).slice(0,5).map(task=>item(task.title,'À réaliser')).join('')||empty('Tout est à jour !'))}</div>`;
-    }
-    function calendar() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const first = (new Date(year,month,1).getDay()+6)%7;
-      const count = new Date(year,month+1,0).getDate();
-      const heads = ['L','M','M','J','V','S','D'].map(day=>`<div class="day head">${day}</div>`).join('');
-      const blanks = Array.from({length:first},()=>'<div class="day blank"></div>').join('');
-      const days = Array.from({length:count},(_,index)=>{
-        const day = index+1;
-        const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const events = state.events.filter(event=>event.date===iso);
-        return `<div class="day ${events.length?'has':''}" title="${escapeHtml(events.map(event=>event.title).join(', '))}">${day}${events.length?' •':''}</div>`;
-      }).join('');
-      return card(`🗓️ ${now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}`,`<div class="calendar">${heads}${blanks}${days}</div>`,true);
-    }
-    function agenda() {
-      const events = [...state.events].sort((a,b)=>a.date.localeCompare(b.date));
-      return `<div class="grid">${calendar()}${card('Ajouter un événement',form('events',input('Titre','title')+input('Date','date','date')+input('Heure','time','time',false)+input('Lieu','place','text',false)))}${card('Tous les événements',events.map(event=>item(event.title,`${dateLabel(event.date)}${event.time?' à '+event.time:''}${event.place?' · '+event.place:''}`,removeButton('events',event.id))).join('')||empty('Créez votre premier événement'))}</div>`;
-    }
-    function polls() {
-      const fields = input('Question','title')+`<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>`;
-      const listing = state.polls.map(poll=>{
-        const options = poll.options.map((option,index)=>{
-          const selected = poll.vote===index;
-          return `<button class="vote${selected?' selected':''}" data-vote="${poll.id}" data-choice="${index}" ${poll.closed?'disabled':''}>${escapeHtml(option)}${selected?' ✓':''}</button>`;
-        }).join('');
-        return `<div class="item"><div class="row"><strong>${escapeHtml(poll.title)}</strong>${removeButton('polls',poll.id)}</div><div class="votes">${options}</div><p class="sub">${poll.closed?'Sondage clôturé':'Vote local de démonstration : une réponse par appareil'}</p><button class="btn secondary" data-close="${poll.id}" ${poll.closed?'disabled':''}>Clôturer</button></div>`;
-      }).join('');
-      return `<div class="grid">${card('Créer un sondage',form('polls',fields,'Créer le sondage'))}${card('Sondages',listing||empty('Aucun sondage créé'))}</div>`;
-    }
-    function sharing() {
-      const notes = card('📝 Pense-bêtes',form('notes',input('Titre','title')+`<label>Contenu<textarea name="text" required></textarea></label>`)+state.notes.map(note=>item(note.title,note.text,removeButton('notes',note.id))).join(''));
-      const tasks = card('✅ Listes et tâches',form('tasks',input('Tâche','title'))+state.tasks.map(task=>`<div class="item row"><label class="check"><input type="checkbox" data-task="${task.id}" ${task.done?'checked':''}><span>${escapeHtml(task.title)}</span></label>${removeButton('tasks',task.id)}</div>`).join(''));
-      const ideas = card('💡 Boîte à idées',form('ideas',input('Idée de sortie','title'))+state.ideas.map(idea=>item(idea.title,'Idée proposée',removeButton('ideas',idea.id))).join(''));
-      const expenses = card('💶 Dépenses',form('expenses',input('Description','title')+input('Montant (€)','amount','number')+input('Payé par','payer')+input('Nombre de participants','participants','number'))+state.expenses.map(expense=>item(expense.title,`${Number(expense.amount).toFixed(2)} € payés par ${expense.payer} · ${(Number(expense.amount)/Number(expense.participants)).toFixed(2)} € / personne`,removeButton('expenses',expense.id))).join(''));
-      const albums = card('📷 Albums photos',form('albums',input('Nom de l’album','title'))+state.albums.map(album=>item(album.title,'Album créé (ajout de photos prévu avec Supabase)',removeButton('albums',album.id))).join(''));
-      return `<div class="grid">${notes}${tasks}${ideas}${expenses}${albums}</div>`;
-    }
-    function group() {
-      const birthdays = card('🎂 Anniversaires',form('birthdays',input('Prénom','title')+input('Date de naissance','date','date'))+state.birthdays.map(person=>item(person.title,dateLabel(person.date),removeButton('birthdays',person.id))).join(''));
-      return `<div class="grid">${card('👥 Notre groupe','<p>6 à 10 membres prévus.</p><p>Les comptes, les invitations et les rôles sont gérés par Supabase dans la section « Membres et accès » sous les modules.</p>')}${birthdays}${card('🔔 Notifications','<p>Préférences et notifications push prévues dans la version connectée.</p>')}${card('🔒 Confidentialité','<p>Cette démonstration conserve ses données dans le navigateur actuel. Ne saisissez pas d’informations sensibles.</p>')}</div>`;
-    }
-    function render() {
-      $('pageTitle').textContent = pages.find(entry=>entry.id===page).label;
-      $('desktopNav').innerHTML = pages.map(entry=>`<button data-page="${entry.id}" class="${page===entry.id?'active':''}">${entry.icon} &nbsp; ${entry.label}</button>`).join('');
-      $('mobileNav').innerHTML = pages.map(entry=>`<button data-page="${entry.id}" class="${page===entry.id?'active':''}"><span>${entry.icon}</span>${entry.label}</button>`).join('');
-      $('content').innerHTML = ({accueil:home,agenda,organiser:polls,partage:sharing,groupe})[page]();
-    }
-    document.addEventListener('click',event=>{
-      const button = event.target.closest('button');
-      if (!button) return;
-      if (button.dataset.page) {page=button.dataset.page;render();return;}
-      if (button.dataset.remove) {
-        const {remove,id} = button.dataset;
-        state[remove] = state[remove].filter(entry=>entry.id!==id);
-        save();render();return;
-      }
-      if (button.dataset.vote) {
-        const poll = state.polls.find(entry=>entry.id===button.dataset.vote);
-        if (poll && !poll.closed) {poll.vote=Number(button.dataset.choice);save();render();}
-        return;
-      }
-      if (button.dataset.close) {
-        const poll = state.polls.find(entry=>entry.id===button.dataset.close);
-        if (poll) {poll.closed=true;save();render();}
-      }
-    });
-    document.addEventListener('change',event=>{
-      const taskId = event.target.dataset.task;
-      if (!taskId) return;
-      const task = state.tasks.find(entry=>entry.id===taskId);
-      if (task) {task.done=event.target.checked;save();render();}
-    });
-    document.addEventListener('input',event=>{if (event.target.setCustomValidity) event.target.setCustomValidity('');});
-    document.addEventListener('submit',event=>{
-      const formElement = event.target.closest('form[data-form]');
-      if (!formElement) return;
-      event.preventDefault();
-      const kind = formElement.dataset.form;
-      const data = Object.fromEntries(new FormData(formElement).entries());
-      if (kind==='polls') {
-        data.options = data.options.split('\n').map(option=>option.trim()).filter(Boolean);
-        if (data.options.length<2) {formElement.querySelector('textarea').setCustomValidity('Ajoutez au moins deux propositions.');formElement.reportValidity();return;}
-        data.vote=null;
-        data.closed=false;
-      }
-      if (kind==='tasks') data.done=false;
-      if (kind==='expenses' && (Number(data.amount)<=0 || Number(data.participants)<1 || !Number.isInteger(Number(data.participants)))) {
-        formElement.querySelector('[name=participants]').setCustomValidity('Saisissez un montant positif et un nombre entier de participants.');formElement.reportValidity();return;
-      }
-      state[kind].push({id:uid(),...data});
-      save();render();
-    });
-    render();
-    if ('serviceWorker' in navigator && location.protocol==='https:') {
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
-    }
-  </script>
-  <script type="module" src="./auth.js"></script>
-</body>
+	<head>
+		<meta charset="utf-8"/>
+		<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+		<meta content="#845EC2" name="theme-color"/>
+		<meta content="yes" name="apple-mobile-web-app-capable"/>
+		<meta content="Zouzous Club" name="application-name"/>
+		<meta content="Zouzous Club" name="apple-mobile-web-app-title"/>
+		<meta content="default" name="apple-mobile-web-app-status-bar-style"/>
+		<title>
+			Zouzous Club — Espace privé
+		</title>
+		<link href="./manifest.webmanifest" rel="manifest"/>
+		<link href="./icon.svg" rel="icon" type="image/svg+xml"/>
+		<link href="./icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
+		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
+		<link href="./styles.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<section class="auth-screen" id="authScreen">
+			<div class="auth-card">
+				<h1 class="brand-heading">
+					<img alt="" class="brand-logo" height="54" src="icon.svg" width="54"/>
+					<span>
+						Zouzous Club
+					</span>
+				</h1>
+				<p class="sub">
+					Un espace réservé aux amis invités.
+				</p>
+				<div data-auth-view="" id="authLogin">
+					<form id="loginForm">
+						<label>
+							Adresse e-mail
+							<input autocomplete="username" name="email" required="" type="email"/>
+						</label>
+						<label>
+							Mot de passe
+							<input autocomplete="current-password" name="password" required="" type="password"/>
+						</label>
+						<button class="btn" type="submit">
+							Se connecter
+						</button>
+					</form>
+					<button class="auth-link" id="forgotButton" type="button">
+						Mot de passe oublié ?
+					</button>
+				</div>
+				<div data-auth-view="" hidden="" id="authPassword">
+					<p>
+						Définissez votre mot de passe personnel pour activer ou récupérer votre compte.
+					</p>
+					<form id="passwordForm">
+						<label>
+							Nouveau mot de passe (12 caractères minimum)
+							<input autocomplete="new-password" minlength="12" name="password" required="" type="password"/>
+						</label>
+						<button class="btn" type="submit">
+							Enregistrer le mot de passe
+						</button>
+					</form>
+				</div>
+				<div data-auth-view="" hidden="" id="authReset">
+					<form id="resetForm">
+						<label>
+							Adresse e-mail
+							<input name="email" required="" type="email"/>
+						</label>
+						<button class="btn" type="submit">
+							Recevoir un lien de réinitialisation
+						</button>
+					</form>
+					<button class="auth-link" id="backButton" type="button">
+						Retour à la connexion
+					</button>
+				</div>
+				<div data-auth-view="" hidden="" id="authPending">
+					<p>
+						Accès en attente. Contactez l'administrateur du groupe.
+					</p>
+				</div>
+				<p class="auth-message" id="authMessage" role="status">
+				</p>
+			</div>
+		</section>
+		<div class="shell" hidden="">
+			<aside>
+				<h1 class="brand-heading">
+					<img alt="" class="brand-logo" height="46" src="icon.svg" width="46"/>
+					<span>
+						Zouzous Club
+					</span>
+				</h1>
+				<nav aria-label="Navigation principale" class="nav" id="desktopNav">
+				</nav>
+			</aside>
+			<main>
+				<div class="top">
+					<div>
+						<h2 id="pageTitle">
+							Accueil
+						</h2>
+						<div class="sub">
+							Votre espace privé entre amis
+						</div>
+					</div>
+					<span class="pill">
+						Espace privé
+					</span>
+				</div>
+				<div class="notice">
+					Connexion et gestion des membres sécurisées par Supabase. Les modules Agenda, Sondages et Partage restent des démonstrations locales, non synchronisées entre amis : ne saisissez pas de données confidentielles.
+				</div>
+				<div aria-live="polite" id="content">
+				</div>
+				<section class="card" hidden="" id="memberPanel" style="margin-top:20px">
+					<h3>
+						🔐 Membres et accès
+					</h3>
+					<p id="memberStatus">
+					</p>
+					<p id="memberRole">
+					</p>
+					<div id="membersList">
+					</div>
+					<div hidden="" id="invitePanel">
+						<h3>
+							Inviter un ami
+						</h3>
+						<form class="form" id="inviteForm">
+							<label>
+								Adresse e-mail
+								<input name="email" required="" type="email"/>
+							</label>
+							<button class="btn" type="submit">
+								Envoyer l'invitation
+							</button>
+						</form>
+						<p id="inviteMessage" role="status">
+						</p>
+					</div>
+					<button class="btn secondary" id="logoutButton" type="button">
+						Se déconnecter
+					</button>
+				</section>
+			</main>
+		</div>
+		<nav aria-label="Navigation mobile" class="tabs" id="mobileNav">
+		</nav>
+		<script defer="" src="./app.js">
+		</script>
+		<script src="./auth.js" type="module">
+		</script>
+	</body>
 </html>
+
