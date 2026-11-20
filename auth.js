@@ -247,7 +247,9 @@ $('resetForm').addEventListener('submit', async (event) => {
         return;
     }
 
-    const email = String(new FormData(event.currentTarget).get('email')).trim();
+    const invitationForm = new FormData(event.currentTarget);
+    const email = String(invitationForm.get('email')).trim();
+    const roleInvite = String(invitationForm.get('role') || 'membre');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}${window.location.pathname}`
     });
@@ -286,13 +288,16 @@ $('inviteForm').addEventListener('submit', async (event) => {
     }
 
     const button = event.currentTarget.querySelector('button[type="submit"]');
-    const email = String(new FormData(event.currentTarget).get('email')).trim();
+    const invitationForm = new FormData(event.currentTarget);
+    const email = String(invitationForm.get('email')).trim();
+    const roleInvite = String(invitationForm.get('role') || 'membre');
     button.disabled = true;
 
     try {
         const { data, error } = await supabase.functions.invoke('inviter-membre', {
             body: {
                 groupe_id: groupId,
+                role: roleInvite,
                 email
             }
         });
