@@ -113,7 +113,7 @@
 					</span>
 				</div>
 				<div class="notice">
-					Connexion et gestion des membres sécurisées par Supabase. Les modules Agenda, Sondages et Partage restent des démonstrations locales, non synchronisées entre amis : ne saisissez pas de données confidentielles.
+					Les contenus de démonstration sont enregistrés uniquement sur cet appareil et ne sont pas encore partagés entre les membres.
 				</div>
 				<div aria-live="polite" id="content">
 				</div>
@@ -168,7 +168,16 @@
 		</div>
 		<nav aria-label="Navigation mobile" class="tabs" id="mobileNav">
 		</nav>
-		<script defer src="./app.js?v=13">
+		<div id="editorOverlay" class="editor-overlay" hidden>
+	<div class="editor-dialog" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+		<div class="editor-heading">
+			<h2 id="editorTitle">Ajouter</h2>
+			<button type="button" id="editorClose" class="editor-close" aria-label="Fermer">×</button>
+		</div>
+		<div id="editorBody"></div>
+	</div>
+</div>
+<script defer src="./app.js?v=14">
 		</script>
 		
 		<script src="./auth.js" type="module">
