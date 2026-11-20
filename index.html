@@ -16,6 +16,7 @@
 		<link href="./icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
 		<link href="./styles.css" rel="stylesheet"/>
+		<link href="./roles.css" rel="stylesheet"/>
 	</head>
 	<body>
 		<section class="auth-screen" id="authScreen">
@@ -135,24 +136,13 @@
 							</label>
 							<fieldset class="invitation-roles">
 								<legend>Rôle de la personne invitée</legend>
-								<label>
+								<label class="invitation-role-choice">
 									<input type="radio" name="role" value="membre" checked="checked"/>
-									Membre
+									<span>Membre</span>
 								</label>
-								<label>
+								<label class="invitation-role-choice">
 									<input type="radio" name="role" value="administrateur"/>
-									Administrateur
-								</label>
-							</fieldset>
-							<fieldset class="invitation-roles">
-								<legend>Rôle de la personne invitée</legend>
-								<label>
-									<input type="radio" name="role" value="membre" checked="checked"/>
-									Membre
-								</label>
-								<label>
-									<input type="radio" name="role" value="administrateur"/>
-									Administrateur
+									<span>Administrateur</span>
 								</label>
 							</fieldset>
 							<button class="btn" type="submit">
