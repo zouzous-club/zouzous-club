@@ -8,6 +8,7 @@ const mobile = $('mobileNav');
 const query = new URLSearchParams(window.location.search);
 const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 const callbackType = fragment.get('type') || query.get('type');
+const recoveryRequested = query.get('recovery') === '1' || callbackType === 'recovery';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const configured = SUPABASE_URL.startsWith('https://')
     && !SUPABASE_URL.includes('VOTRE-PROJET')
@@ -18,7 +19,7 @@ let currentUser = null;
 let groupId = null;
 let role = null;
 let processing = false;
-let passwordFlow = callbackType === 'invite' || callbackType === 'recovery';
+let passwordFlow = callbackType === 'invite' || recoveryRequested;
 
 function message(value, isError = false) {
     $('authMessage').textContent = value;
@@ -131,14 +132,21 @@ async function refresh() {
 
         if (!currentUser) {
             setAccess(false);
-            show('authLogin');
+
+            if (passwordFlow) {
+                show('authPending');
+                message('Vérification du lien de récupération en cours…');
+            } else {
+                show('authLogin');
+            }
+
             return;
         }
 
         if (passwordFlow) {
             setAccess(false);
             show('authPassword');
-            message('Définissez votre mot de passe pour terminer l’activation.');
+            message('Choisissez votre nouveau mot de passe (12 caractères minimum).');
             return;
         }
 
@@ -224,7 +232,7 @@ $('passwordForm').addEventListener('submit', async (event) => {
 
         passwordFlow = false;
         window.history.replaceState(null, '', window.location.pathname);
-        message('Compte activé.');
+        message('Votre mot de passe a été enregistré.');
         await refresh();
     } catch (error) {
         message(
@@ -245,7 +253,7 @@ $('resetForm').addEventListener('submit', async (event) => {
 
     const email = String(new FormData(event.currentTarget).get('email')).trim();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}${window.location.pathname}`
+        redirectTo: `${window.location.origin}${window.location.pathname}?recovery=1`
     });
 
     message(
@@ -325,6 +333,10 @@ if (!configured) {
     supabase.auth.onAuthStateChange((event) => {
         if (event === 'PASSWORD_RECOVERY') {
             passwordFlow = true;
+        }
+
+        if (event === 'SIGNED_OUT' && passwordFlow) {
+            passwordFlow = false;
         }
 
         window.setTimeout(() => {
