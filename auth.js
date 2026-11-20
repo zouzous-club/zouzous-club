@@ -146,8 +146,11 @@ async function refresh() {
         console.error('Zouzous Club : erreur de vérification des droits', error);
         setAccess(false);
         show('authLogin');
-        const detail = error?.code || error?.message || 'Erreur inconnue';
-        message(`Impossible de vérifier les droits (${detail}).`, true);
+        const code = error?.code || 'SANS_CODE';
+        const description = error?.message || 'Erreur inconnue';
+        const precision = error?.details ? ` — ${error.details}` : '';
+        const conseil = error?.hint ? ` — ${error.hint}` : '';
+        message(`Vérification des droits impossible [${code}] : ${description}${precision}${conseil}`, true);
     } finally {
         processing = false;
     }
