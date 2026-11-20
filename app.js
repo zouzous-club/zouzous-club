@@ -4,7 +4,7 @@
 																																						{ id: 'agenda', label: 'Agenda', icon: '▦' },
 																																											{ id: 'organiser', label: 'Organiser', icon: '◉' },
 																																								{ id: 'partage', label: 'Partage', icon: '☷' },
-																																					{ id: 'groupe', label: 'Groupe', icon: '♧' }
+																																					{ id: 'groupe', label: 'Profil', icon: '♧' }
 		];
 																																		const storageKey = 'entre-nous-prototype-v1';
 																																																																																							const initial = { events: [], polls: [], notes: [], tasks: [], ideas: [], expenses: [], birthdays: [], albums: [] };
@@ -82,6 +82,7 @@
 																																																																																																																																												$('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}">${entry.icon} &nbsp; ${entry.label}</button>`).join('');
 																																																																																																																																															$('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span>${entry.icon}</span>${entry.label}</button>`).join('');
 																																																																																			$('content').innerHTML = ({ accueil: home, agenda, organiser: polls, partage: sharing, groupe })[page]();
+	window.zouzousProfileSync?.(page);
 	}
 																																		document.addEventListener('click', event => {
 																																							const button = event.target.closest('button');
