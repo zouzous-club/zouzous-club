@@ -8,7 +8,6 @@ const mobile = $('mobileNav');
 const query = new URLSearchParams(window.location.search);
 const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 const callbackType = fragment.get('type') || query.get('type');
-const recoveryRequested = query.get('recovery') === '1' || callbackType === 'recovery';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const configured = SUPABASE_URL.startsWith('https://')
     && !SUPABASE_URL.includes('VOTRE-PROJET')
@@ -19,7 +18,7 @@ let currentUser = null;
 let groupId = null;
 let role = null;
 let processing = false;
-let passwordFlow = callbackType === 'invite' || recoveryRequested;
+let passwordFlow = callbackType === 'invite' || callbackType === 'recovery';
 
 function message(value, isError = false) {
     $('authMessage').textContent = value;
@@ -87,7 +86,7 @@ async function loadMembers() {
 async function loadMembership() {
     const { data, error } = await supabase
         .from('membres_groupes')
-        .select('groupe_id,role,statut,groupes(nom)')
+        .select('groupe_id,role,statut')
         .eq('statut', 'actif')
         .limit(20);
 
@@ -107,8 +106,7 @@ async function loadMembership() {
     groupId = membership.groupe_id;
     role = membership.role;
 
-    $('memberStatus').textContent =
-        `${membership.groupes?.nom || 'Zouzous Club'} · ${currentUser.email}`;
+    $('memberStatus').textContent = `Zouzous Club · ${currentUser.email}`;
     $('memberRole').textContent = role === 'administrateur'
         ? 'Administrateur'
         : 'Membre';
@@ -132,29 +130,24 @@ async function refresh() {
 
         if (!currentUser) {
             setAccess(false);
-
-            if (passwordFlow) {
-                show('authPending');
-                message('Vérification du lien de récupération en cours…');
-            } else {
-                show('authLogin');
-            }
-
+            show('authLogin');
             return;
         }
 
         if (passwordFlow) {
             setAccess(false);
             show('authPassword');
-            message('Choisissez votre nouveau mot de passe (12 caractères minimum).');
+            message('Définissez votre mot de passe pour terminer l’activation.');
             return;
         }
 
         await loadMembership();
-    } catch {
+    } catch (error) {
+        console.error('Zouzous Club : erreur de vérification des droits', error);
         setAccess(false);
-        show('authPending');
-        message('Impossible de vérifier les droits. Réessayez.', true);
+        show('authLogin');
+        const detail = error?.code || error?.message || 'Erreur inconnue';
+        message(`Impossible de vérifier les droits (${detail}).`, true);
     } finally {
         processing = false;
     }
@@ -232,7 +225,7 @@ $('passwordForm').addEventListener('submit', async (event) => {
 
         passwordFlow = false;
         window.history.replaceState(null, '', window.location.pathname);
-        message('Votre mot de passe a été enregistré.');
+        message('Compte activé.');
         await refresh();
     } catch (error) {
         message(
@@ -253,16 +246,13 @@ $('resetForm').addEventListener('submit', async (event) => {
 
     const email = String(new FormData(event.currentTarget).get('email')).trim();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}${window.location.pathname}?recovery=1`
+        redirectTo: `${window.location.origin}${window.location.pathname}`
     });
 
-    if (error) {
-        const code = error.code || `HTTP ${error.status || 'inconnu'}`;
-        message(`Demande impossible (${code}) : ${error.message || 'Erreur Supabase'}`, true);
-        return;
-    }
-
-    message('Si le compte existe, un e-mail a été envoyé.');
+    message(
+        error ? 'Demande impossible.' : 'Si le compte existe, un e-mail a été envoyé.',
+        Boolean(error)
+    );
 });
 
 $('forgotButton').addEventListener('click', () => {
@@ -336,10 +326,6 @@ if (!configured) {
     supabase.auth.onAuthStateChange((event) => {
         if (event === 'PASSWORD_RECOVERY') {
             passwordFlow = true;
-        }
-
-        if (event === 'SIGNED_OUT' && passwordFlow) {
-            passwordFlow = false;
         }
 
         window.setTimeout(() => {
