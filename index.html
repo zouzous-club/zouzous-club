@@ -17,6 +17,9 @@
     main{padding:30px 34px 90px;min-width:0}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.top h2{margin:0;font-size:29px}.sub{color:#716e7d;font-size:14px}.pill{background:#F1E8FA;color:#7043AD;border-radius:30px;padding:8px 12px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:white;border:1px solid #eae8f1;border-radius:18px;padding:19px;box-shadow:0 3px 14px #27204806}.card h3{margin:0 0 12px;font-size:17px}.card p{margin:7px 0;color:#686476}.wide{grid-column:1/-1}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.btn{border:0;background:#845EC2;color:white;border-radius:11px;padding:10px 15px;font-weight:600}.btn.secondary{background:#F1E8FA;color:#7043AD}.btn.danger{background:#fff0f0;color:#a72e43}.muted{color:#777287}.item{padding:13px 0;border-top:1px solid #f0edf4}.item:first-of-type{border-top:0}.item strong{display:block}.item small{color:#797487}.form{display:grid;gap:12px}.form label{font-weight:600;font-size:14px}.form input,.form textarea,.form select{width:100%;border:1px solid #d9d5e5;border-radius:10px;padding:11px;background:#fff;color:#252238}.form textarea{min-height:90px;resize:vertical}.form button{justify-self:start}.tag{font-size:12px;background:#f2f0fa;padding:5px 9px;border-radius:20px;color:#5e538a}.empty{padding:20px;color:#777287;text-align:center;background:#faf9fe;border-radius:12px}.notice{padding:12px 15px;border-radius:12px;background:#fff7df;color:#735b22;font-size:13px;margin-bottom:20px}.tabs{display:none}.check{display:flex;align-items:center;gap:10px;padding:8px 0}.check input{width:18px;height:18px;accent-color:#845EC2}.votes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.vote{border:1px solid #ddd7f6;border-radius:10px;background:white;padding:8px 10px}.vote.selected{background:#845EC2;color:white}.section-title{margin:24px 0 12px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.day{background:#f6f4fc;border-radius:8px;padding:8px 4px;text-align:center;min-height:42px;font-size:13px}.day.has{background:#EBD9F7;color:#7043AD;font-weight:700}.day.head{background:transparent;min-height:25px;font-weight:700}.day.blank{background:transparent}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
     @media(max-width:760px){.shell{display:block}aside{display:none}main{padding:22px 16px 100px}.top h2{font-size:24px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;gap:3px;padding:9px 5px calc(9px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e8e5ef;z-index:3}.tabs button{flex:1;border:0;background:none;color:#777287;font-size:11px;padding:7px 1px}.tabs button.active{color:#7043AD;font-weight:700}.tabs span{display:block;font-size:21px;margin-bottom:3px}}
   
+    .brand-heading { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { width: 54px; height: 54px; object-fit: contain; flex: 0 0 auto; }
+    aside .brand-logo { width: 46px; height: 46px; }
     /* Zouzous Club : identité visuelle, responsive et accessible. */
     :root {
       --violet: #845EC2;
@@ -55,7 +58,7 @@
 <body>
   <section id="authScreen" class="auth-screen">
     <div class="auth-card">
-      <h1>🌈 Zouzous Club</h1>
+      <h1 class="brand-heading"><img class="brand-logo" src="icon.svg" alt="" width="54" height="54"> <span>Zouzous Club</span></h1>
       <p class="sub">Un espace réservé aux amis invités.</p>
       <div id="authLogin" data-auth-view>
         <form id="loginForm">
@@ -84,7 +87,7 @@
     </div>
   </section>
   <div class="shell" hidden>
-    <aside><h1>🌈 Zouzous Club</h1><nav class="nav" id="desktopNav" aria-label="Navigation principale"></nav></aside>
+    <aside><h1 class="brand-heading"><img class="brand-logo" src="icon.svg" alt="" width="46" height="46"> <span>Zouzous Club</span></h1><nav class="nav" id="desktopNav" aria-label="Navigation principale"></nav></aside>
     <main>
       <div class="top"><div><h2 id="pageTitle">Accueil</h2><div class="sub">Votre espace privé entre amis</div></div><span class="pill">Espace privé</span></div>
       <div class="notice">Connexion et gestion des membres sécurisées par Supabase. Les modules Agenda, Sondages et Partage restent des démonstrations locales, non synchronisées entre amis : ne saisissez pas de données confidentielles.</div>
