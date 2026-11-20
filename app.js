@@ -1,10 +1,10 @@
 										'use strict';
 												const pages = [
-																																								{ id: 'accueil', label: 'Accueil', icon: '⌂' },
-																																						{ id: 'agenda', label: 'Agenda', icon: '▦' },
-																																											{ id: 'organiser', label: 'Organiser', icon: '◉' },
-																																								{ id: 'partage', label: 'Partage', icon: '☷' },
-																																					{ id: 'groupe', label: 'Profil', icon: '♧' }
+																																								{ id: 'accueil', label: 'Accueil', icon: 'nav-accueil.png' },
+																																						{ id: 'agenda', label: 'Agenda', icon: 'nav-agenda.png' },
+																																											{ id: 'organiser', label: 'Organiser', icon: 'nav-organiser.png' },
+																																								{ id: 'partage', label: 'Partage', icon: 'nav-partage.png' },
+																																					{ id: 'groupe', label: 'Profil', icon: 'nav-profil.png' }
 		];
 																																		const storageKey = 'entre-nous-prototype-v1';
 																																																																																							const initial = { events: [], polls: [], notes: [], tasks: [], ideas: [], expenses: [], birthdays: [], albums: [] };
@@ -79,8 +79,8 @@
 	}
 															function render() {
 																																																												$('pageTitle').textContent = pages.find(entry => entry.id === page).label;
-																																																																																																																																												$('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}">${entry.icon} &nbsp; ${entry.label}</button>`).join('');
-																																																																																																																																															$('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span>${entry.icon}</span>${entry.label}</button>`).join('');
+																																																																																																																																												$('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"><span>${entry.label}</span></button>`).join('');
+																																																																																																																																															$('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span class="nav-icon-wrap"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"></span>${entry.label}</button>`).join('');
 																																																																																			$('content').innerHTML = ({ accueil: home, agenda, organiser: polls, partage: sharing, groupe })[page]();
 	window.zouzousProfileSync?.(page);
 	}
