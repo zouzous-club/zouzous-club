@@ -1,6 +1,6 @@
 {
 	"name": "Zouzous Club",
-	"short_name": "Zouzous",
+	"short_name": "Zouzous Club",
 	"description": "Notre club privé entre amis",
 	"start_url": "./index.html",
 	"scope": "./",
