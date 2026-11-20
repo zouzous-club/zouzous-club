@@ -1,0 +1,56 @@
+/* Mise en page de la rubrique Profil, sur ordinateur et mobile. */
+.profile-page {
+	display: grid;
+	gap: 18px;
+	max-width: 850px;
+}
+
+.profile-page .card {
+	min-width: 0;
+	margin: 0;
+}
+
+.profile-intro p {
+	margin-bottom: 0;
+	color: #716e7d;
+}
+
+#memberPanel h3 {
+	margin-top: 0;
+}
+
+#memberStatus,
+#memberRole {
+	overflow-wrap: anywhere;
+}
+
+#membersList {
+	margin: 16px 0 22px;
+}
+
+#invitePanel {
+	padding-top: 18px;
+	border-top: 1px solid #e9e3f1;
+}
+
+#inviteForm {
+	max-width: 650px;
+}
+
+#inviteForm .invitation-roles {
+	margin-top: 18px;
+}
+
+#logoutButton {
+	margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+	.profile-page {
+		gap: 12px;
+	}
+
+	#inviteForm .invitation-roles {
+		padding: 10px 12px;
+	}
+}
