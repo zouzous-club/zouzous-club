@@ -1,0 +1,27 @@
+/* Icônes officielles : taille identique aux anciennes icônes. */
+.nav button {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.nav-icon {
+	display: block;
+	width: 21px;
+	height: 21px;
+	object-fit: contain;
+	flex: none;
+}
+
+.nav-icon-wrap {
+	display: block;
+	margin-bottom: 3px;
+}
+
+@media (max-width: 700px) {
+	.tabs .nav-icon {
+		width: 21px;
+		height: 21px;
+		margin: 0 auto;
+	}
+}
