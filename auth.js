@@ -298,15 +298,29 @@ $('inviteForm').addEventListener('submit', async (event) => {
         });
 
         if (error || !data?.ok) {
-            throw error || new Error(data?.erreur || 'INVITATION_REFUSEE');
+            let detail = data?.erreur || data?.message || error?.message || 'ERREUR_INCONNUE';
+            let httpStatus = error?.context?.status || '';
+
+            if (error?.context && typeof error.context.json === 'function') {
+                try {
+                    const responseBody = await error.context.json();
+                    detail = responseBody?.erreur || responseBody?.message || detail;
+                } catch {
+                    // La réponse n'est pas nécessairement au format JSON.
+                }
+            }
+
+            const code = httpStatus ? ` (HTTP ${httpStatus})` : '';
+            $('inviteMessage').textContent = `Invitation impossible${code} : ${detail}`;
+            return;
         }
 
         $('inviteMessage').textContent =
             'Invitation envoyée. Le lien de connexion peut expirer avant les 7 jours de l’invitation.';
         event.currentTarget.reset();
-    } catch {
+    } catch (error) {
         $('inviteMessage').textContent =
-            'Invitation impossible : vérifiez la configuration ou le compte invité.';
+            `Invitation impossible : ${error instanceof Error ? error.message : 'ERREUR_INCONNUE'}`;
     } finally {
         button.disabled = false;
     }
