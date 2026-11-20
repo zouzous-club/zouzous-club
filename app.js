@@ -81,8 +81,23 @@ function render() {
     $('pageTitle').textContent = pages.find(entry => entry.id === page).label;
     $('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"><span>${entry.label}</span></button>`).join('');
     $('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span class="nav-icon-wrap"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"></span>${entry.label}</button>`).join('');
-    $('content').innerHTML = ({ accueil: home, agenda, organiser: polls, partage: sharing, groupe })[page]();
-    window.zouzousProfileSync?.(page);
+    $('content').innerHTML = page === 'groupe' ? '' : ({ accueil: home, agenda, organiser: polls, partage: sharing })[page]();
+    // Affichage explicite de la rubrique active : ne dépend pas de l'ordre
+    // de chargement des scripts et rétablit les contenus après chaque clic.
+    const profilePage = $('profilePage');
+    const content = $('content');
+    const notice = document.querySelector('.shell main > .notice');
+    const isProfile = page === 'groupe';
+
+    content.hidden = isProfile;
+
+    if (profilePage) {
+        profilePage.hidden = !isProfile;
+    }
+
+    if (notice) {
+        notice.hidden = isProfile;
+    }
 }
 document.addEventListener('click', event => {
     const button = event.target.closest('button');
