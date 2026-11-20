@@ -7,7 +7,7 @@ const pages = [
     { id: 'groupe', label: 'Profil', icon: 'nav-profil.png' }
 ];
 const storageKey = 'entre-nous-prototype-v1';
-const initial = { events: [], polls: [], notes: [], tasks: [], ideas: [], expenses: [], birthdays: [], albums: [] };
+const initial = { events: [], polls: [], notes: [], tasks: [], ideas: [], expenses: [], birthdays: [], albums: [], posts: [] };
 let state;
 try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -50,28 +50,56 @@ function calendar() {
     }).join('');
     return card(`🗓️ ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, `<div class="calendar">${heads}${blanks}${days}</div>`, true);
 }
+const addButton = (kind, title) => `<button class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter">+</button>`;
+const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
+const editorDefinitions = {
+    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Lieu', 'place', 'text', false) },
+    polls: { title: 'Nouveau sondage', fields: input('Question', 'title') + `<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>` },
+    notes: { title: 'Nouveau pense-bête', fields: input('Titre', 'title') + `<label>Contenu<textarea name="text" required></textarea></label>` },
+    tasks: { title: 'Nouvelle tâche', fields: input('Tâche', 'title') },
+    ideas: { title: 'Nouvelle idée', fields: input('Idée de sortie', 'title') },
+    expenses: { title: 'Nouvelle dépense', fields: input('Description', 'title') + input('Montant (€)', 'amount', 'number') + input('Payé par', 'payer') + input('Nombre de participants', 'participants', 'number') },
+    albums: { title: 'Nouvel album', fields: input('Nom de l’album', 'title') },
+    posts: { title: 'Nouvelle publication', fields: `<label>Votre message<textarea name="text" required placeholder="Quoi de neuf chez les zouzous ?"></textarea></label>` }
+};
+function openEditor(kind) {
+    const definition = editorDefinitions[kind];
+    if (!definition) return;
+    $('editorTitle').textContent = definition.title;
+    $('editorBody').innerHTML = form(kind, definition.fields, kind === 'posts' ? 'Publier' : 'Ajouter');
+    $('editorOverlay').hidden = false;
+    document.body.classList.add('editor-open');
+    $('editorBody').querySelector('input,textarea')?.focus();
+}
+function closeEditor() {
+    $('editorOverlay').hidden = true;
+    document.body.classList.remove('editor-open');
+    $('editorBody').replaceChildren();
+}
 function agenda() {
     const events = [...state.events].sort((a, b) => a.date.localeCompare(b.date));
-    return `<div class="grid">${calendar()}${card('Ajouter un événement', form('events', input('Titre', 'title') + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Lieu', 'place', 'text', false)))}${card('Tous les événements', events.map(event => item(event.title, `${dateLabel(event.date)}${event.time ? ' à ' + event.time : ''}${event.place ? ' · ' + event.place : ''}`, removeButton('events', event.id))).join('') || empty('Créez votre premier événement'))}</div>`;
+    return `<div class="grid">${calendar()}${section('Tous les événements', 'events', events.map(event => item(event.title, `${dateLabel(event.date)}${event.time ? ' à ' + event.time : ''}${event.place ? ' · ' + event.place : ''}`, removeButton('events', event.id))).join('') || empty('Créez votre premier événement'))}</div>`;
 }
-function polls() {
-    const fields = input('Question', 'title') + `<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>`;
-    const listing = state.polls.map(poll => {
+function organiser() {
+    const posts = [...state.posts].reverse();
+    return `<div class="feed-heading"><div><h3>Le fil des zouzous</h3><p class="sub">Messages et nouvelles du groupe</p></div>${addButton('posts', 'une publication')}</div><div class="feed">${posts.map(post => `<article class="card post"><div class="row"><strong>Publication</strong>${removeButton('posts', post.id)}</div><p class="post-text">${escapeHtml(post.text)}</p><small>${escapeHtml(post.createdAt || '')}</small></article>`).join('') || empty('Aucune publication pour le moment. Touchez + pour écrire un message.')}</div><p class="sub">L’ajout de photos et la synchronisation entre membres seront disponibles avec la connexion des publications à Supabase.</p>`;
+}
+function pollListing() {
+    return state.polls.map(poll => {
         const options = poll.options.map((option, index) => {
             const selected = poll.vote === index;
             return `<button class="vote${selected ? ' selected' : ''}" data-vote="${poll.id}" data-choice="${index}" ${poll.closed ? 'disabled' : ''}>${escapeHtml(option)}${selected ? ' ✓' : ''}</button>`;
         }).join('');
-        return `<div class="item"><div class="row"><strong>${escapeHtml(poll.title)}</strong>${removeButton('polls', poll.id)}</div><div class="votes">${options}</div><p class="sub">${poll.closed ? 'Sondage clôturé' : 'Vote local de démonstration : une réponse par appareil'}</p><button class="btn secondary" data-close="${poll.id}" ${poll.closed ? 'disabled' : ''}>Clôturer</button></div>`;
+        return `<div class="item"><div class="row"><strong>${escapeHtml(poll.title)}</strong>${removeButton('polls', poll.id)}</div><div class="votes">${options}</div><p class="sub">${poll.closed ? 'Sondage clôturé' : 'Vote local de démonstration'}</p><button class="btn secondary" data-close="${poll.id}" ${poll.closed ? 'disabled' : ''}>Clôturer</button></div>`;
     }).join('');
-    return `<div class="grid">${card('Créer un sondage', form('polls', fields, 'Créer le sondage'))}${card('Sondages', listing || empty('Aucun sondage créé'))}</div>`;
 }
 function sharing() {
-    const notes = card('📝 Pense-bêtes', form('notes', input('Titre', 'title') + `<label>Contenu<textarea name="text" required></textarea></label>`) + state.notes.map(note => item(note.title, note.text, removeButton('notes', note.id))).join(''));
-    const tasks = card('✅ Listes et tâches', form('tasks', input('Tâche', 'title')) + state.tasks.map(task => `<div class="item row"><label class="check"><input type="checkbox" data-task="${task.id}" ${task.done ? 'checked' : ''}><span>${escapeHtml(task.title)}</span></label>${removeButton('tasks', task.id)}</div>`).join(''));
-    const ideas = card('💡 Boîte à idées', form('ideas', input('Idée de sortie', 'title')) + state.ideas.map(idea => item(idea.title, 'Idée proposée', removeButton('ideas', idea.id))).join(''));
-    const expenses = card('💶 Dépenses', form('expenses', input('Description', 'title') + input('Montant (€)', 'amount', 'number') + input('Payé par', 'payer') + input('Nombre de participants', 'participants', 'number')) + state.expenses.map(expense => item(expense.title, `${Number(expense.amount).toFixed(2)} € payés par ${expense.payer} · ${(Number(expense.amount) / Number(expense.participants)).toFixed(2)} € / personne`, removeButton('expenses', expense.id))).join(''));
-    const albums = card('📷 Albums photos', form('albums', input('Nom de l’album', 'title')) + state.albums.map(album => item(album.title, 'Album créé (ajout de photos prévu avec Supabase)', removeButton('albums', album.id))).join(''));
-    return `<div class="grid">${notes}${tasks}${ideas}${expenses}${albums}</div>`;
+    const notes = section('📝 Pense-bêtes', 'notes', state.notes.map(note => item(note.title, note.text, removeButton('notes', note.id))).join('') || empty('Aucune note'));
+    const tasks = section('✅ Listes et tâches', 'tasks', state.tasks.map(task => `<div class="item row"><label class="check"><input type="checkbox" data-task="${task.id}" ${task.done ? 'checked' : ''}><span>${escapeHtml(task.title)}</span></label>${removeButton('tasks', task.id)}</div>`).join('') || empty('Aucune tâche'));
+    const ideas = section('💡 Boîte à idées', 'ideas', state.ideas.map(idea => item(idea.title, 'Idée proposée', removeButton('ideas', idea.id))).join('') || empty('Aucune idée'));
+    const expenses = section('💶 Dépenses', 'expenses', state.expenses.map(expense => item(expense.title, `${Number(expense.amount).toFixed(2)} € payés par ${expense.payer} · ${(Number(expense.amount) / Number(expense.participants)).toFixed(2)} € / personne`, removeButton('expenses', expense.id))).join('') || empty('Aucune dépense'));
+    const albums = section('📷 Albums photos', 'albums', state.albums.map(album => item(album.title, 'Album créé · Photos à venir', removeButton('albums', album.id))).join('') || empty('Aucun album'));
+    return `<div class="grid">${section('🗳️ Sondages', 'polls', pollListing() || empty('Aucun sondage'))}${notes}${tasks}${ideas}${expenses}${albums}</div>`;
 }
 function group() {
     const birthdays = card('🎂 Anniversaires', form('birthdays', input('Prénom', 'title') + input('Date de naissance', 'date', 'date')) + state.birthdays.map(person => item(person.title, dateLabel(person.date), removeButton('birthdays', person.id))).join(''));
@@ -81,7 +109,7 @@ function render() {
     $('pageTitle').textContent = pages.find(entry => entry.id === page).label;
     $('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"><span>${entry.label}</span></button>`).join('');
     $('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span class="nav-icon-wrap"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"></span>${entry.label}</button>`).join('');
-    $('content').innerHTML = page === 'groupe' ? '' : ({ accueil: home, agenda, organiser: polls, partage: sharing })[page]();
+    $('content').innerHTML = page === 'groupe' ? '' : ({ accueil: home, agenda, organiser, partage: sharing })[page]();
     // Affichage explicite de la rubrique active : ne dépend pas de l'ordre
     // de chargement des scripts et rétablit les contenus après chaque clic.
     const profilePage = $('profilePage');
@@ -106,6 +134,15 @@ document.addEventListener('click', event => {
     if (button.dataset.page) {
         page = button.dataset.page;
         render();
+        window.scrollTo(0, 0);
+        return;
+    }
+    if (button.dataset.add) {
+        openEditor(button.dataset.add);
+        return;
+    }
+    if (button.id === 'editorClose') {
+        closeEditor();
         return;
     }
     if (button.dataset.remove) {
@@ -170,9 +207,16 @@ document.addEventListener('submit', event => {
         formElement.reportValidity();
         return;
     }
-    state[kind].push({ id: uid(), ...data });
+    state[kind].push({ id: uid(), ...data, ...(kind === 'posts' ? { createdAt: new Date().toLocaleString('fr-FR') } : {}) });
     save();
+    closeEditor();
     render();
+});
+$('editorOverlay').addEventListener('click', event => {
+    if (event.target === $('editorOverlay')) closeEditor();
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !$('editorOverlay').hidden) closeEditor();
 });
 render();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
