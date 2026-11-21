@@ -106,7 +106,7 @@ function calendar() {
         const eventCount = events.length;
         const accessibleLabel = `${dateLabel(iso)} : ${eventCount} événement${eventCount > 1 ? 's' : ''}`;
 
-        return `<button type="button" class="day calendar-date weekday-${(first + index) % 7} ${eventCount ? 'has' : ''}"
+        return `<button type="button" class="day calendar-date weekday-${(first + index) % 7} ${eventCount ? 'has' : ''} ${iso === dateISO(new Date()) ? 'is-today' : ''}"
             data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
             title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${events.slice(0, 2).map(entry => `<span>${eventIcon(entry)}</span>`).join('')}${eventCount > 2 ? `<span class="calendar-more">+${eventCount - 2}</span>` : ''}</span>` : ''}</button>`;
     }).join('');

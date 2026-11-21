@@ -1803,17 +1803,31 @@ button.add-button img {
     filter: brightness(0.96);
 }
 
-.agenda-page.month-fit .calendar .calendar-date .day-number {
-    font-weight: 900;
+/* Le mois en cours conserve ses fonds d'origine (V28). */
+.agenda-page.month-fit .calendar .calendar-date {
+    background: #f6f4fc;
+    color: inherit;
 }
 
-.agenda-page.month-fit .calendar .calendar-date.weekday-0 { background: #e9e0f7; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-1 { background: #f7e0f0; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-2 { background: #ffe1e9; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-3 { background: #ffe9df; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-4 { background: #fff1d5; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-5 { background: #f9f3d5; }
-.agenda-page.month-fit .calendar .calendar-date.weekday-6 { background: #e8f1e4; }
+.agenda-page.month-fit .calendar .calendar-date.has {
+    background: #ebd9f7;
+    color: #7043ad;
+}
+
+.agenda-page.month-fit .calendar .calendar-date .day-number {
+    font-weight: 400;
+}
+
+/* Seule la date d'aujourd'hui est en gras et sa case est rose. */
+.agenda-page.month-fit .calendar .calendar-date.is-today,
+.agenda-page.month-fit .calendar .calendar-date.is-today.has {
+    background: #d65db1;
+    color: #ffffff;
+}
+
+.agenda-page.month-fit .calendar .calendar-date.is-today .day-number {
+    font-weight: 800;
+}
 
 .agenda-page.month-fit .calendar .calendar-outside {
     display: flex;
@@ -1840,16 +1854,20 @@ button.add-button img {
 }
 
 [data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date {
-    color: #fff;
+    background: #302b3b;
+    color: #f0eaf5;
 }
 
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-0 { background: #4d3b6b; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-1 { background: #633a5d; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-2 { background: #683b51; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-3 { background: #70493f; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-4 { background: #675335; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-5 { background: #5e5834; }
-[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.weekday-6 { background: #425744; }
+[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.has {
+    background: #4a355f;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.is-today,
+[data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date.is-today.has {
+    background: #d65db1;
+    color: #ffffff;
+}
 
 [data-theme="dark"] .agenda-page.month-fit .calendar .calendar-outside {
     background: #302f36;
