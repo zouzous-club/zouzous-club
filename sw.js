@@ -1,7 +1,7 @@
 // Zouzous Club — Service Worker.
 // Les pages, sessions et données privées ne sont jamais mises en cache.
 
-const CACHE = 'zouzous-club-assets-v40';
+const CACHE = 'zouzous-club-assets-v42';
 
 const STATIC = [
     './icon.svg',
@@ -73,21 +73,35 @@ self.addEventListener('push', (event) => {
         icon: './icon-192.png',
         badge: './icon-192.png',
         tag: data.tag || 'zouzous-evenement',
-        data: { url: './' }
+        data: { url: typeof data.url === 'string' ? data.url : './' }
     }));
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil((async () => {
-        const url = new URL(event.notification.data?.url || './', self.registration.scope).href;
+        const destination = new URL(event.notification.data?.url || './', self.registration.scope);
+        // Ne jamais permettre de redirection en dehors de cette PWA.
+        if (destination.origin !== self.location.origin ||
+            !destination.pathname.startsWith(new URL(self.registration.scope).pathname)) {
+            return;
+        }
+
         const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         for (const windowClient of windows) {
             if (windowClient.url.startsWith(self.registration.scope)) {
-                await windowClient.focus();
-                return;
+                // navigate() transmet le lien profond à l'application déjà ouverte.
+                try {
+                    const navigated = await windowClient.navigate(destination.href);
+                    if (navigated) {
+                        await navigated.focus();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('Navigation vers l’événement impossible :', error);
+                }
             }
         }
-        await self.clients.openWindow(url);
+        await self.clients.openWindow(destination.href);
     })());
 });

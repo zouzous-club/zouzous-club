@@ -244,6 +244,7 @@ async function loadSharedEvents() {
             ? document.querySelector('.agenda-list-scroll')?.scrollTop
             : null;
         render();
+        ouvrirEvenementDepuisNotification();
         if (previousScroll !== null && previousScroll !== undefined) {
             document.querySelector('.timed-scroll')?.scrollTo(0, previousScroll);
         }
@@ -719,6 +720,28 @@ function agendaDateForEvent(entry) {
     // Événement futur ou terminé : ouverture sur son premier jour.
     return entry.date;
 }
+
+// Lien profond provenant d'une notification push : #evenement=<UUID>.
+// L'événement n'est ouvert qu'après le chargement de l'agenda du cercle connecté.
+function ouvrirEvenementDepuisNotification() {
+    const match = /^#evenement=([0-9a-fA-F-]{36})$/.exec(window.location.hash);
+    if (!match || !sharedAgenda || !sharedAgendaInitialized) return;
+
+    const evenement = state.events.find(entry => entry.id.toLowerCase() === match[1].toLowerCase());
+    if (!evenement) return;
+
+    const jour = agendaDateForEvent(evenement);
+    displayedMonth = new Date(`${jour}T12:00:00`);
+    openDay(jour);
+    // La fiche existante s'ouvre sur l'événement exact, pas seulement sur l'accueil.
+    openEditor('events', evenement.id);
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+}
+
+window.addEventListener('hashchange', () => {
+    if (!sharedAgendaInitialized) return;
+    ouvrirEvenementDepuisNotification();
+});
 
 function openDay(iso) {
     page = 'agenda';
