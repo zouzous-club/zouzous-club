@@ -1081,3 +1081,200 @@ button.add-button img {
         font-size: 12px;
     }
 }
+
+
+/* V20 : agenda simplifié et thème sombre partagé entre toutes les pages. */
+.top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-toggle {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #e6d8f1;
+    border-radius: 50%;
+    background: #f3e8fa;
+    color: #7043ad;
+    font-size: 23px;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+.agenda-view-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.agenda-list-card {
+    padding-bottom: 12px;
+}
+.agenda-list-day {
+    padding: 13px 0 18px;
+}
+.agenda-list-day + .agenda-list-day {
+    border-top: 1px solid #eae5f0;
+}
+.agenda-list-day h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    text-transform: capitalize;
+    color: #756c81;
+}
+.agenda-list-event {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 65px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee8f4;
+    cursor: pointer;
+}
+.agenda-list-event:last-child {
+    border-bottom: 0;
+}
+.agenda-list-accent {
+    width: 4px;
+    align-self: stretch;
+    flex: 0 0 4px;
+    border-radius: 6px;
+    background: #845ec2;
+}
+.agenda-list-details {
+    min-width: 0;
+    flex: 1;
+}
+.agenda-list-details strong {
+    display: block;
+    overflow-wrap: anywhere;
+}
+.agenda-list-details a {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #7043ad;
+}
+.agenda-list-hours {
+    min-width: 48px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.agenda-list-hours span, .agenda-list-hours small {
+    display: block;
+}
+.agenda-list-hours small {
+    color: #81798d;
+}
+
+:root[data-theme="dark"] {
+    color: #f5f0fb;
+    background: #14121c;
+}
+[data-theme="dark"] body,
+[data-theme="dark"] .shell,
+[data-theme="dark"] main {
+    background: #14121c;
+    color: #f5f0fb;
+}
+[data-theme="dark"] aside,
+[data-theme="dark"] .card,
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .editor-dialog,
+[data-theme="dark"] .day-column-title,
+[data-theme="dark"] .profile-page > *,
+[data-theme="dark"] .agenda-list-card {
+    background: #211c2c;
+    color: #f5f0fb;
+    border-color: #41364e;
+}
+[data-theme="dark"] .auth-screen {
+    background: linear-gradient(145deg, #231b35, #191521, #292019);
+}
+[data-theme="dark"] .sub,
+[data-theme="dark"] .card p,
+[data-theme="dark"] .item small,
+[data-theme="dark"] .muted,
+[data-theme="dark"] .agenda-list-day h3,
+[data-theme="dark"] .agenda-list-hours small,
+[data-theme="dark"] .hour-line span {
+    color: #bcb2c9;
+}
+[data-theme="dark"] .empty,
+[data-theme="dark"] .day,
+[data-theme="dark"] .agenda-view-selector,
+[data-theme="dark"] .calendar-navigation button,
+[data-theme="dark"] .event-edit,
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .pill,
+[data-theme="dark"] .nav button.active {
+    background: #352a46;
+    color: #e4d2ff;
+    border-color: #514064;
+}
+[data-theme="dark"] .agenda-view-selector button {
+    color: #d4bee9;
+}
+[data-theme="dark"] .agenda-view-selector button.selected,
+[data-theme="dark"] .btn:not(.secondary):not(.danger) {
+    background: #845ec2;
+    color: #fff;
+}
+[data-theme="dark"] .day.has,
+[data-theme="dark"] .day.selected,
+[data-theme="dark"] .hour-event {
+    background: #4a355f;
+    color: #fff;
+}
+[data-theme="dark"] .form input,
+[data-theme="dark"] .form textarea,
+[data-theme="dark"] .form select,
+[data-theme="dark"] .auth-card input,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: #2b2537;
+    color: #f5f0fb;
+    border-color: #61516e;
+}
+[data-theme="dark"] .item,
+[data-theme="dark"] .agenda-list-event,
+[data-theme="dark"] .agenda-list-day + .agenda-list-day,
+[data-theme="dark"] .hour-line,
+[data-theme="dark"] .hour-grid,
+[data-theme="dark"] .day-column + .day-column {
+    border-color: #453a53;
+}
+[data-theme="dark"] .nav button,
+[data-theme="dark"] .tabs button {
+    color: #c8bed2;
+}
+[data-theme="dark"] .nav button.active,
+[data-theme="dark"] .tabs button.active {
+    color: #d4b3ff;
+}
+[data-theme="dark"] .tabs {
+    background: #211c2c;
+    border-color: #453a53;
+}
+[data-theme="dark"] .event-location,
+[data-theme="dark"] .agenda-list-details a,
+[data-theme="dark"] .hour-place {
+    color: #d0a9ff;
+}
+[data-theme="dark"] .btn.danger {
+    background: #4b2935;
+    color: #ffb5c4;
+}
+[data-theme="dark"] .btn.secondary {
+    background: #382b4b;
+    color: #e2c8ff;
+}
+@media (max-width: 520px) {
+    .top-actions {
+        gap: 5px;
+    }
+    .theme-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+    }
+}
