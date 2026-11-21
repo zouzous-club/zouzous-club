@@ -358,7 +358,9 @@ function render() {
     $('pageTitle').textContent = page === 'compte' ? 'Mon profil' : pages.find(entry => entry.id === page).label;
     $('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"><span>${entry.label}</span></button>`).join('');
     $('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span class="nav-icon-wrap"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"></span>${entry.label}</button>`).join('');
-    $('content').innerHTML = page === 'groupe' ? '' : ({ accueil: home, agenda, organiser, partage: sharing })[page]();
+    $('content').innerHTML = (page === 'groupe' || page === 'compte')
+        ? ''
+        : ({ accueil: home, agenda, organiser, partage: sharing })[page]();
     // Affichage explicite de la rubrique active : ne dépend pas de l'ordre
     // de chargement des scripts et rétablit les contenus après chaque clic.
     const profilePage = $('profilePage');
