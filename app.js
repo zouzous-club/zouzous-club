@@ -77,6 +77,66 @@ let sharedAgendaError = '';
 let sharedAgendaInitialized = false;
 let sharedAgendaKnown = new Set();
 let sharedAgendaRefreshTimer = null;
+// La clé VAPID publique est injectée ici après configuration serveur.
+// Ne jamais placer la clé VAPID privée ni la clé service_role dans ce fichier.
+const pushPublicKey = ''; // À remplacer par la clé VAPID publique générée pour le projet.
+
+function base64UrlToUint8Array(base64Url) {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const decoded = atob(padded);
+    return Uint8Array.from(decoded, character => character.charCodeAt(0));
+}
+
+async function syncPushSubscription() {
+    if (!sharedAgenda || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!pushPublicKey) {
+        updateNotificationControl('Les notifications en arrière-plan nécessitent encore la configuration de la clé VAPID et du serveur.');
+        return;
+    }
+
+    const { client, groupId } = sharedAgenda;
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!notificationPreference) {
+        if (subscription) {
+            await client.from('abonnements_push_zouzous').delete().eq('endpoint', subscription.endpoint);
+            await subscription.unsubscribe();
+        }
+        updateNotificationControl();
+        return;
+    }
+
+    if (Notification.permission === 'denied') {
+        updateNotificationControl('Notifications bloquées dans les réglages du navigateur ou de l’appareil.');
+        return;
+    }
+
+    if (!subscription) {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            updateNotificationControl('Autorisation non accordée. Vous pouvez continuer à utiliser les alertes dans l’application.');
+            return;
+        }
+        subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: base64UrlToUint8Array(pushPublicKey)
+        });
+    }
+
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return;
+    const { error } = await client.from('abonnements_push_zouzous').upsert({
+        utilisateur_id: user.id,
+        groupe_id: groupId,
+        endpoint: subscription.endpoint,
+        abonnement: subscription.toJSON()
+    }, { onConflict: 'endpoint' });
+    if (error) throw error;
+    updateNotificationControl('Notifications push activées sur cet appareil.');
+}
+
 const notificationKey = 'zouzous-club-notifications';
 let notificationPreference = localStorage.getItem(notificationKey) === 'oui';
 
@@ -112,19 +172,20 @@ function showNewEventNotice(events) {
     }
 }
 
-function updateNotificationControl() {
+function updateNotificationControl(messageOverride = '') {
     const control = document.getElementById('eventNotificationToggle');
     const status = document.getElementById('eventNotificationStatus');
     if (control) control.checked = notificationPreference;
-    if (status) status.textContent = notificationPreference
+    if (status) status.textContent = messageOverride || (notificationPreference
         ? 'Alertes activées pendant l’utilisation de l’application. Les notifications en arrière-plan nécessitent une configuration push supplémentaire.'
-        : 'Recevoir une alerte lorsque de nouveaux événements sont ajoutés pendant que l’application est ouverte.';
+        : 'Recevoir une alerte lorsque de nouveaux événements sont ajoutés pendant que l’application est ouverte.');
 }
 
 document.getElementById('eventNotificationToggle')?.addEventListener('change', event => {
     notificationPreference = event.target.checked;
     localStorage.setItem(notificationKey, notificationPreference ? 'oui' : 'non');
     updateNotificationControl();
+    void syncPushSubscription().catch(error => updateNotificationControl(`Activation push impossible : ${error.message}`));
 });
 updateNotificationControl();
 
@@ -194,6 +255,9 @@ function showAgendaError(message) {
 
 window.addEventListener('focus', () => {
     void loadSharedEvents();
+    if (notificationPreference) {
+        void syncPushSubscription().catch(error => console.warn('Push :', error));
+    }
 });
 
 window.addEventListener('zouzous:membership', event => {
@@ -708,7 +772,15 @@ document.addEventListener('keydown', event => {
 document.addEventListener('click', async event => {
     const homeEvent = event.target.closest('[data-open-event]');
     if (homeEvent) {
-        openEditor('events', homeEvent.dataset.openEvent);
+        const selected = state.events.find(entry => entry.id === homeEvent.dataset.openEvent);
+        if (selected) {
+            const today = dateISO(new Date());
+            const targetDate = selected.date < today && eventOccursOn(selected, today)
+                ? today
+                : selected.date;
+            displayedMonth = new Date(`${targetDate}T12:00:00`);
+            openDay(targetDate);
+        }
         return;
     }
     const eventCard = event.target.closest('[data-event-card]');

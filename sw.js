@@ -1,7 +1,7 @@
 // Zouzous Club — Service Worker.
 // Les pages, sessions et données privées ne sont jamais mises en cache.
 
-const CACHE = 'zouzous-club-assets-v35';
+const CACHE = 'zouzous-club-assets-v36';
 
 const STATIC = [
     './icon.svg',
@@ -56,4 +56,38 @@ self.addEventListener('fetch', (event) => {
             return reponseCache || fetch(event.request);
         })
     );
+});
+
+// Notifications reçues même lorsque l’application n’est pas ouverte.
+self.addEventListener('push', (event) => {
+    let data = {};
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch (error) {
+        data = { body: event.data?.text() || 'Un événement a été ajouté.' };
+    }
+    const title = String(data.title || 'Zouzous Club');
+    const body = String(data.body || 'Un nouvel événement est disponible.');
+    event.waitUntil(self.registration.showNotification(title, {
+        body,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: data.tag || 'zouzous-evenement',
+        data: { url: './' }
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil((async () => {
+        const url = new URL(event.notification.data?.url || './', self.registration.scope).href;
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const windowClient of windows) {
+            if (windowClient.url.startsWith(self.registration.scope)) {
+                await windowClient.focus();
+                return;
+            }
+        }
+        await self.clients.openWindow(url);
+    })());
 });
