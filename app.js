@@ -4,7 +4,7 @@ const pages = [
     { id: 'agenda', label: 'Agenda', icon: 'nav-agenda.png' },
     { id: 'organiser', label: 'Organiser', icon: 'nav-organiser.png' },
     { id: 'partage', label: 'Partage', icon: 'nav-partage.png' },
-    { id: 'groupe', label: 'Profil', icon: 'nav-profil.png' }
+    { id: 'groupe', label: 'Mon cercle', icon: 'nav-profil.png' }
 ];
 const storageKey = 'entre-nous-prototype-v1';
 const initial = { events: [], polls: [], notes: [], tasks: [], ideas: [], expenses: [], birthdays: [], albums: [], posts: [] };
@@ -32,20 +32,13 @@ function applyTheme() {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
 
-    const control = document.getElementById('themeToggle');
-
-    if (control) {
-        const labels = { auto: 'Automatique', clair: 'Clair', sombre: 'Sombre' };
-        control.textContent = dark ? '☀' : '☾';
-        control.title = `Apparence : ${labels[themePreference]}. Appuyer pour changer.`;
-        control.setAttribute('aria-label', control.title);
-    }
+    const control = document.getElementById('themePreference');
+    if (control) control.value = themePreference;
 }
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-    const next = (themeChoices.indexOf(themePreference) + 1) % themeChoices.length;
-    themePreference = themeChoices[next];
+document.getElementById('themePreference')?.addEventListener('change', event => {
+    themePreference = event.target.value;
     localStorage.setItem(themeKey, themePreference);
     applyTheme();
 });
@@ -80,9 +73,11 @@ const card = (title, body, wide = false) => `<section class="card${wide ? ' wide
 const input = (label, name, type = 'text', required = true) => `<label>${label}<input name="${name}" type="${type}" ${required ? 'required' : ''}></label>`;
 const form = (kind, fields, label = 'Ajouter') => `<form class="form" data-form="${kind}">${fields}<button class="btn" type="submit">${label}</button></form>`;
 const removeButton = (kind, id) => `<button class="btn danger" data-remove="${kind}" data-id="${id}" aria-label="Supprimer">Supprimer</button>`;
-const upcoming = () => [...state.events].filter(event => event.date >= new Date().toLocaleDateString('en-CA')).sort((a, b) => a.date.localeCompare(b.date));
+const upcoming = () => [...state.events].filter(event => event.date >= dateISO(new Date())).sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
 function home() {
-    const next = upcoming().slice(0, 3);
+    const today = dateISO(new Date());
+    const lastDay = addDays(today, 30);
+    const next = upcoming().filter(event => event.date <= lastDay);
     const openPolls = state.polls.filter(poll => !poll.closed);
     return `<div class="grid">${card('📅 Prochains événements', next.length ? next.map(event => item(event.title, dateLabel(event.date))).join('') : empty('Aucun événement à venir'))}${card('🗳️ Sondages ouverts', openPolls.length ? openPolls.map(poll => item(poll.title, `${poll.options.length} propositions`)).join('') : empty('Aucun sondage en cours'))}${card('📝 Pense-bêtes', state.notes.slice(-3).reverse().map(note => item(note.title, note.text)).join('') || empty('Aucune note'))}${card('✅ Tâches à faire', state.tasks.filter(task => !task.done).slice(0, 5).map(task => item(task.title, 'À réaliser')).join('') || empty('Tout est à jour !'))}</div>`;
 }
@@ -109,12 +104,13 @@ function calendar() {
 
         return `<button type="button" class="day calendar-date ${eventCount ? 'has' : ''}"
             data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
-            title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${[...new Set(events.map(eventIcon))].slice(0, 3).map(icon => `<span>${icon}</span>`).join('')}${new Set(events.map(eventIcon)).size > 3 ? '<span>+</span>' : ''}</span>` : ''}</button>`;
+            title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${events.slice(0, 2).map(entry => `<span>${eventIcon(entry)}</span>`).join('')}${eventCount > 2 ? `<span class="calendar-more">+${eventCount - 2}</span>` : ''}</span>` : ''}</button>`;
     }).join('');
 
     return `<section class="card wide">
         <div class="calendar-heading">
             <h3>🗓️ ${escapeHtml(monthLabel)}</h3>
+            ${addButton('events', 'un événement')}
             <div class="calendar-navigation">
                 <button type="button" data-month-change="-1" aria-label="Mois précédent">‹</button>
                 <button type="button" data-month-change="1" aria-label="Mois suivant">›</button>
@@ -218,7 +214,7 @@ function timeGrid(iso) {
 function dayView(twoDays = false) {
     const dates = twoDays ? [selectedDate, addDays(selectedDate, 1)] : [selectedDate];
     return `<section class="card wide agenda-timed-card">
-        <div class="calendar-heading"><h3>${twoDays ? 'Deux jours' : 'Journée'} · ${dateLabel(selectedDate)}</h3>
+        <div class="calendar-heading"><h3>${twoDays ? 'Deux jours' : 'Journée'} · ${dateLabel(selectedDate)}</h3>${addButton('events', 'un événement')}
             <div class="calendar-navigation"><button data-shift-day="-${twoDays ? 2 : 1}" aria-label="Précédent">‹</button><button data-shift-day="${twoDays ? 2 : 1}" aria-label="Suivant">›</button></div>
         </div>
         <div class="timed-scroll"><div class="day-columns ${twoDays ? 'two-days' : ''}">${dates.map(timeGrid).join('')}</div></div>
@@ -258,16 +254,28 @@ function listView() {
     }).join('');
 
     return `<section class="card wide agenda-list-card">
-        <div class="calendar-heading"><h3>Liste des événements</h3></div>
-        ${days || empty('Aucun événement enregistré')}
+        <div class="calendar-heading"><h3>Liste des événements</h3>${addButton('events', 'un événement')}</div>
+        ${days || empty('Pas d’événement')}
     </section>`;
+}
+
+function focusFirstEvent() {
+    const scroll = document.querySelector('.timed-scroll');
+    if (!scroll) return;
+    const dayEvents = state.events.filter(entry => entry.date === selectedDate && eventBounds(entry));
+    if (!dayEvents.length) {
+        scroll.scrollTop = 8 * 72;
+        return;
+    }
+    const firstMinute = Math.min(...dayEvents.map(entry => eventBounds(entry).start));
+    scroll.scrollTop = Math.max(0, (firstMinute / 60 - 1) * 72);
 }
 
 function openDay(iso) {
     selectedDate = iso;
     agendaView = 'jour';
     render();
-    document.querySelector('.agenda-timed-card')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    focusFirstEvent();
 }
 
 const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="16" height="16"></button>`;
@@ -314,18 +322,11 @@ function agenda() {
     ];
     const selector = `<div class="agenda-view-selector" role="group" aria-label="Affichage de l’agenda">${views.map(([id, label]) => `<button type="button" data-agenda-view="${id}" class="${agendaView === id ? 'selected' : ''}" aria-pressed="${agendaView === id}">${label}</button>`).join('')}</div>`;
     const content = agendaView === 'mois' ? monthScroll() : agendaView === 'jour' ? dayView() : listView();
-    return `<div class="grid agenda-page">${selector}${content}${section('Tous les événements', 'events', [...state.events].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || '')).map(entry => `<div class="item row"><div><strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong><small>${dateLabel(entry.date)}${entry.time ? ' à ' + entry.time : ''}${entry.endTime ? '–' + entry.endTime : ''}${entry.place ? ' · ' + escapeHtml(entry.place) : ''}</small></div><div class="event-actions">${eventEditorButton(entry)}${removeButton('events', entry.id)}</div></div>`).join('') || empty('Créez votre premier événement'))}</div>`;
+    return `<div class="grid agenda-page">${selector}${content}</div>`;
 }
 
 function monthScroll() {
-    const original = displayedMonth;
-    const months = [];
-    for (let index = 0; index < 4; index++) {
-        displayedMonth = new Date(original.getFullYear(), original.getMonth() + index, 1);
-        months.push(calendar());
-    }
-    displayedMonth = original;
-    return `<div class="month-scroll">${months.join('')}</div>`;
+    return `<div class="month-scroll">${calendar()}</div>`;
 }
 
 function organiser() {
@@ -354,7 +355,7 @@ function group() {
     return `<div class="grid">${card('👥 Notre groupe', '<p>6 à 10 membres prévus.</p><p>Les comptes, les invitations et les rôles sont gérés par Supabase dans la section « Membres et accès » sous les modules.</p>')}${birthdays}${card('🔔 Notifications', '<p>Préférences et notifications push prévues dans la version connectée.</p>')}${card('🔒 Confidentialité', '<p>Cette démonstration conserve ses données dans le navigateur actuel. Ne saisissez pas d’informations sensibles.</p>')}</div>`;
 }
 function render() {
-    $('pageTitle').textContent = pages.find(entry => entry.id === page).label;
+    $('pageTitle').textContent = page === 'compte' ? 'Mon profil' : pages.find(entry => entry.id === page).label;
     $('desktopNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"><span>${entry.label}</span></button>`).join('');
     $('mobileNav').innerHTML = pages.map(entry => `<button data-page="${entry.id}" class="${page === entry.id ? 'active' : ''}"><span class="nav-icon-wrap"><img class="nav-icon" src="./${entry.icon}" alt="" aria-hidden="true" width="21" height="21"></span>${entry.label}</button>`).join('');
     $('content').innerHTML = page === 'groupe' ? '' : ({ accueil: home, agenda, organiser, partage: sharing })[page]();
@@ -363,17 +364,14 @@ function render() {
     const profilePage = $('profilePage');
     const content = $('content');
     const notice = document.querySelector('.shell main > .notice');
-    const isProfile = page === 'groupe';
-
-    content.hidden = isProfile;
-
-    if (profilePage) {
-        profilePage.hidden = !isProfile;
-    }
-
-    if (notice) {
-        notice.hidden = isProfile;
-    }
+    const isCircle = page === 'groupe';
+    const isAccount = page === 'compte';
+    const accountPage = $('accountPage');
+    content.hidden = isCircle || isAccount;
+    if (profilePage) profilePage.hidden = !isCircle;
+    if (accountPage) accountPage.hidden = !isAccount;
+    if (notice) notice.hidden = isCircle || isAccount;
+    applyTheme();
 }
 document.addEventListener('keydown', event => {
     if (event.key !== 'Enter' && event.key !== ' ') {
@@ -397,6 +395,12 @@ document.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button)
     return;
+    if (button.id === 'privateSpaceButton') {
+        page = 'compte';
+        render();
+        document.querySelector('.shell > main')?.scrollTo(0, 0);
+        return;
+    }
     if (button.dataset.page) {
         page = button.dataset.page;
         render();
@@ -406,12 +410,14 @@ document.addEventListener('click', event => {
     if (button.dataset.agendaView) {
         agendaView = button.dataset.agendaView;
         render();
+        if (agendaView === 'jour') focusFirstEvent();
         return;
     }
     if (button.dataset.shiftDay) {
         selectedDate = addDays(selectedDate, Number(button.dataset.shiftDay));
         displayedMonth = new Date(`${selectedDate}T12:00:00`);
         render();
+        focusFirstEvent();
         return;
     }
     if (button.dataset.editEvent) {
