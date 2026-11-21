@@ -21,6 +21,24 @@ let displayedMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1
 const $ = id => document.getElementById(id);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const uid = () => crypto.randomUUID();
+const eventTypes = {
+    restaurant: { label: 'Restaurant', icon: '🍽️' },
+    cinema: { label: 'Cinéma', icon: '🎬' },
+    sport: { label: 'Sport', icon: '⚽' },
+    concert: { label: 'Concert', icon: '🎵' },
+    fete: { label: 'Fête', icon: '🎉' },
+    voyage: { label: 'Voyage', icon: '✈️' },
+    cafe: { label: 'Café', icon: '☕' },
+    autre: { label: 'Autre', icon: '📅' }
+};
+const eventIcon = event => eventTypes[event.category]?.icon || eventTypes.autre.icon;
+const mapsLink = address => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const eventCategories = () => `<label>Type d’événement
+    <select name="category" required>
+        ${Object.entries(eventTypes).map(([value, entry]) => `<option value="${value}">${entry.icon} ${entry.label}</option>`).join('')}
+    </select>
+</label>`;
+
 const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
 const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 const item = (title, detail, actions = '') => `<div class="item row"><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></div>${actions}</div>`;
@@ -58,7 +76,7 @@ function calendar() {
 
         return `<button type="button" class="day calendar-date ${eventCount ? 'has' : ''}"
             data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
-            title="${escapeHtml(accessibleLabel)}">${day}${eventCount ? '<span class="event-dot" aria-hidden="true"></span>' : ''}</button>`;
+            title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${[...new Set(events.map(eventIcon))].slice(0, 3).map(icon => `<span>${icon}</span>`).join('')}${new Set(events.map(eventIcon)).size > 3 ? '<span>+</span>' : ''}</span>` : ''}</button>`;
     }).join('');
 
     return `<section class="card wide">
@@ -76,26 +94,50 @@ function calendar() {
 function openDay(iso) {
     const events = state.events
         .filter(entry => entry.date === iso)
-        .sort((left, right) => (left.time || '').localeCompare(right.time || ''));
-
-    $('editorTitle').textContent = dateLabel(iso);
+        .sort((left, right) => (left.time || '00:00').localeCompare(right.time || '00:00'));
+    const date = new Date(`${iso}T12:00:00`);
+    const heading = date.toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+    const startHour = 0;
+    const endHour = 24;
+    const slots = Array.from({ length: endHour - startHour }, (_, index) => {
+        const hour = index + startHour;
+        const eventsAtHour = events.filter(entry => {
+            return entry.time && Number(entry.time.split(':')[0]) === hour;
+        });
+        return `<div class="timeline-row">
+            <span class="timeline-hour">${String(hour).padStart(2, '0')}:00</span>
+            <div class="timeline-slot">${eventsAtHour.map(timelineEvent).join('')}</div>
+        </div>`;
+    }).join('');
+    const noTime = events.filter(entry => !entry.time);
+    $('editorTitle').textContent = heading.charAt(0).toUpperCase() + heading.slice(1);
     $('editorBody').innerHTML = `<div class="day-details">
-        ${events.length ? events.map(entry => `<article class="day-event">
-            <h3>${escapeHtml(entry.title)}</h3>
-            ${entry.time ? `<p><strong>Heure :</strong> ${escapeHtml(entry.time)}</p>` : ''}
-            ${entry.place ? `<p><strong>Lieu :</strong> ${escapeHtml(entry.place)}</p>` : ''}
-        </article>`).join('') : empty('Aucun événement prévu ce jour-là.')}
-        <button type="button" class="btn" data-add-on-date="${iso}">Ajouter un événement</button>
+        <div class="day-timeline-header">
+            <strong>${events.length} événement${events.length > 1 ? 's' : ''}</strong>
+            <button type="button" class="btn day-add-button" data-add-on-date="${iso}">+ Ajouter</button>
+        </div>
+        ${noTime.length ? `<div class="all-day-events"><strong>Sans horaire</strong>${noTime.map(timelineEvent).join('')}</div>` : ''}
+        <div class="day-timeline">${slots}</div>
     </div>`;
     $('editorOverlay').hidden = false;
     $('editorOverlay').scrollTop = 0;
     document.body.classList.add('editor-open');
 }
 
-const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="25" height="25"></button>`;
+function timelineEvent(entry) {
+    return `<article class="timeline-event">
+        <div class="timeline-event-heading"><span aria-hidden="true">${eventIcon(entry)}</span><strong>${escapeHtml(entry.title)}</strong></div>
+        ${entry.time ? `<span class="timeline-event-time">${escapeHtml(entry.time)}</span>` : ''}
+        ${entry.place ? `<a class="event-location" href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)} · Ouvrir Maps</a>` : ''}
+    </article>`;
+}
+
+const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="16" height="16"></button>`;
 const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
 const editorDefinitions = {
-    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Lieu', 'place', 'text', false) },
+    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + eventCategories() + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Adresse ou lieu (ouvrable dans Maps)', 'place', 'text', false) },
     polls: { title: 'Nouveau sondage', fields: input('Question', 'title') + `<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>` },
     notes: { title: 'Nouveau pense-bête', fields: input('Titre', 'title') + `<label>Contenu<textarea name="text" required></textarea></label>` },
     tasks: { title: 'Nouvelle tâche', fields: input('Tâche', 'title') },
@@ -121,7 +163,7 @@ function closeEditor() {
 }
 function agenda() {
     const events = [...state.events].sort((a, b) => a.date.localeCompare(b.date));
-    return `<div class="grid">${calendar()}${section('Tous les événements', 'events', events.map(event => item(event.title, `${dateLabel(event.date)}${event.time ? ' à ' + event.time : ''}${event.place ? ' · ' + event.place : ''}`, removeButton('events', event.id))).join('') || empty('Créez votre premier événement'))}</div>`;
+    return `<div class="grid">${calendar()}${section('Tous les événements', 'events', events.map(event => item(`${eventIcon(event)} ${event.title}`, `${dateLabel(event.date)}${event.time ? ' à ' + event.time : ''}${event.place ? ' · ' + event.place : ''}`, removeButton('events', event.id))).join('') || empty('Créez votre premier événement'))}</div>`;
 }
 function organiser() {
     const posts = [...state.posts].reverse();
