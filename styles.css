@@ -1340,3 +1340,150 @@ button.add-button img {
 [data-theme="dark"] .shell > .top h2 { color: #f5f0fb !important; }
 [data-theme="dark"] .shell > .top .sub { color: #c5b7d2 !important; }
 .calendar-heading > .add-button { margin-left: auto; }
+
+
+/* V23 — affichage cohérent de l’agenda, tablette et couleurs de cartes. */
+.agenda-page {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+}
+
+.agenda-page > .agenda-view-selector,
+.agenda-page > .month-scroll,
+.agenda-page > .agenda-timed-card,
+.agenda-page > .agenda-list-card {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.agenda-page > .agenda-view-selector {
+    width: 100%;
+}
+
+/* Conserver la bordure supérieure arc-en-ciel, également en thème sombre. */
+[data-theme="dark"] .card:nth-child(6n + 1) {
+    border-top-color: var(--violet);
+}
+
+[data-theme="dark"] .card:nth-child(6n + 2) {
+    border-top-color: var(--pink);
+}
+
+[data-theme="dark"] .card:nth-child(6n + 3) {
+    border-top-color: var(--coral);
+}
+
+[data-theme="dark"] .card:nth-child(6n + 4) {
+    border-top-color: var(--peach);
+}
+
+[data-theme="dark"] .card:nth-child(6n + 5) {
+    border-top-color: var(--gold);
+}
+
+[data-theme="dark"] .card:nth-child(6n) {
+    border-top-color: var(--lemon);
+}
+
+/* Les iPad utilisent la navigation inférieure comme les téléphones. */
+@media (max-width: 1100px) {
+    .shell:not([hidden]) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .shell > aside {
+        display: none;
+    }
+
+    .shell > .top {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;
+        padding: calc(env(safe-area-inset-top) + 18px) 20px 18px;
+    }
+
+    .shell > main {
+        grid-column: 1;
+        grid-row: 2;
+        padding: 20px 20px calc(110px + env(safe-area-inset-bottom));
+    }
+
+    .tabs:not([hidden]) {
+        display: flex;
+    }
+}
+
+@media (max-width: 760px) {
+    .shell > .top {
+        padding: calc(env(safe-area-inset-top) + 18px) 16px 18px;
+    }
+
+    .shell > main {
+        padding: 20px 16px calc(110px + env(safe-area-inset-bottom));
+    }
+}
+
+#personalProfileForm {
+    max-width: 480px;
+}
+
+#personalProfileForm input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d8cbe9;
+    border-radius: 12px;
+}
+
+#personalProfileMessage {
+    min-height: 1.4em;
+}
+
+[data-theme="dark"] #personalProfileForm input {
+    background: #382b4b;
+    color: #f5f0fb;
+    border-color: #59446b;
+}
+
+/* Navigation tablette : même présentation fixe que sur téléphone. */
+@media (min-width: 761px) and (max-width: 1100px) {
+    .tabs:not([hidden]) {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-around;
+        gap: 3px;
+        padding: 9px 5px calc(9px + env(safe-area-inset-bottom));
+        background: #fff;
+        border-top: 4px solid transparent;
+        border-image: var(--rainbow) 1;
+        z-index: 40;
+    }
+
+    .tabs button {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: #777287;
+        font-size: 12px;
+        padding: 7px 1px;
+    }
+
+    .tabs button.active {
+        color: #7043ad;
+        font-weight: 700;
+    }
+
+    .tabs span {
+        display: block;
+        font-size: 21px;
+    }
+
+    .grid:not(.agenda-page) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

@@ -15,7 +15,7 @@
 		<link href="./icon.svg" rel="icon" type="image/svg+xml"/>
 		<link href="./icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
-		<link href="./styles.css?v=21" rel="stylesheet"/>
+		<link href="./styles.css?v=23" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
 		<link href="./profil.css" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
@@ -108,7 +108,7 @@
 						</div>
 					</div>
 					<div class="top-actions">
-						<button type="button" id="privateSpaceButton" class="pill private-space-button">Espace privé</button>
+						<button type="button" id="privateSpaceButton" class="pill private-space-button">Mon profil</button>
 					</div>
 				</div>
 			<main>
@@ -128,7 +128,15 @@
                             <option value="sombre">Sombre</option>
                         </select>
                     </section>
-                    <section class="card"><h3>Compte personnel</h3><p>Les informations personnelles seront disponibles ici lors de la connexion complète du profil.</p></section>
+                    <section class="card">
+                        <h3>Compte personnel</h3>
+                        <form id="personalProfileForm" class="form">
+                            <label for="personalFirstName">Mon prénom</label>
+                            <input id="personalFirstName" name="prenom" type="text" maxlength="60" autocomplete="given-name" required placeholder="Votre prénom" />
+                            <button class="btn" type="submit">Enregistrer mon prénom</button>
+                        </form>
+                        <p id="personalProfileMessage" role="status" aria-live="polite"></p>
+                    </section>
                 </section>
 				<section id="profilePage" class="profile-page" hidden>
 					<section class="card profile-intro"><h3>Mon cercle</h3><p>Retrouvez les membres et les accès de votre cercle.</p></section>
@@ -187,10 +195,10 @@
 		<div id="editorBody"></div>
 	</div>
 </div>
-<script defer src="./app.js?v=22">
+<script defer src="./app.js?v=23">
 		</script>
 		
-		<script src="./auth.js?v=22" type="module">
+		<script src="./auth.js?v=23" type="module">
 		</script>
 	</body>
 </html>
