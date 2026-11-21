@@ -1278,3 +1278,65 @@ button.add-button img {
         font-size: 20px;
     }
 }
+
+
+/* V21 — agenda lisible, un seul mois et accès au profil personnel. */
+.private-space-button {
+    cursor: pointer;
+    border: 0;
+    font: inherit;
+    white-space: nowrap;
+}
+.private-space-button:focus-visible { outline: 3px solid #845ec2; outline-offset: 3px; }
+.calendar { gap: 5px; }
+.calendar-date {
+    min-height: clamp(64px, 11vw, 105px);
+    justify-content: flex-start;
+    padding: 8px 2px 5px;
+    overflow: hidden;
+    gap: 7px;
+}
+.day-number { font-size: clamp(13px, 2.8vw, 18px); line-height: 1.2; }
+.day-event-icons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    white-space: normal;
+    gap: 2px;
+    width: 100%;
+    font-size: clamp(12px, 2.8vw, 18px);
+    line-height: 1.2;
+}
+.day-event-icons > span { flex: 0 0 auto; }
+.calendar-more { font-size: 11px; font-weight: 800; }
+.theme-setting-label { display: block; font-weight: 700; margin: 10px 0 8px; }
+.theme-preference {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    padding: 12px;
+    border: 1px solid #d8cbe9;
+    border-radius: 12px;
+    background: #f6f0fc;
+    color: #39274c;
+}
+[data-theme="dark"] .theme-preference { background: #382b4b; color: #f5f0fb; border-color: #59446b; }
+[data-theme="dark"] .top {
+    background: #211c2c !important;
+    color: #f5f0fb !important;
+    box-shadow: none !important;
+}
+[data-theme="dark"] .top h2 { color: #f5f0fb !important; }
+[data-theme="dark"] .top .sub { color: #c5b7d2 !important; }
+[data-theme="dark"] .top .pill { background: #382b4b; color: #f5f0fb; }
+@media (max-width: 520px) {
+    .calendar-date { min-height: 72px; }
+    .calendar { gap: 4px; }
+    .day-event-icons { gap: 1px; }
+}
+
+[data-theme="dark"] .shell > .top { background: #211c2c !important; }
+[data-theme="dark"] .shell > .top h2 { color: #f5f0fb !important; }
+[data-theme="dark"] .shell > .top .sub { color: #c5b7d2 !important; }
+.calendar-heading > .add-button { margin-left: auto; }
