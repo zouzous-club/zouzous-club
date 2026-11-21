@@ -1581,3 +1581,172 @@ button.add-button img {
         color: #FFC75F;
     }
 }
+
+
+/* V26 — Le mois entier tient dans la hauteur disponible, sans défilement.
+   La grille comporte toujours six semaines : les changements de mois
+   ne font pas sauter la mise en page. Les autres vues restent libres. */
+.shell > main:has(.agenda-page.month-fit) {
+    overflow-y: hidden;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.agenda-page.month-fit {
+    display: grid;
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
+    align-content: stretch;
+}
+
+.agenda-page.month-fit > .agenda-view-selector {
+    align-self: start;
+}
+
+.agenda-page.month-fit > .month-scroll {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
+.agenda-page.month-fit .month-scroll > .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 12px;
+}
+
+.agenda-page.month-fit .calendar-heading {
+    flex: 0 0 auto;
+    margin-bottom: 8px;
+}
+
+.agenda-page.month-fit .calendar {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-rows: 24px repeat(6, minmax(0, 1fr));
+    gap: clamp(2px, 0.6vh, 5px);
+}
+
+.agenda-page.month-fit .calendar .day {
+    min-height: 0;
+    min-width: 0;
+}
+
+.agenda-page.month-fit .calendar .calendar-date {
+    padding: 3px 1px;
+    gap: 2px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.agenda-page.month-fit .calendar .day-number {
+    font-size: clamp(12px, 1.8vw, 17px);
+}
+
+.agenda-page.month-fit .calendar .day-event-icons {
+    font-size: clamp(12px, 1.9vw, 17px);
+    gap: 1px;
+}
+
+@media (max-width: 1100px) {
+    .shell > main:has(.agenda-page.month-fit) {
+        padding: 10px 12px calc(84px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 420px) {
+    .agenda-page.month-fit .month-scroll > .card {
+        padding: 8px;
+    }
+
+    .agenda-page.month-fit .calendar-heading {
+        gap: 5px;
+    }
+
+    .agenda-page.month-fit .calendar-heading h3 {
+        font-size: 15px;
+    }
+
+    .agenda-page.month-fit .calendar .day-event-icons {
+        font-size: 12px;
+    }
+}
+
+
+/* V27 — Toutes les vues Agenda occupent la hauteur disponible.
+   Seul le contenu de la carte Journée ou Liste défile, jamais la page. */
+.shell > main:has(.agenda-page.agenda-fit) {
+    overflow-y: hidden;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.shell > main:has(.agenda-page.agenda-fit) > #content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.agenda-page.agenda-fit {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+    min-height: 0;
+    height: 100%;
+    gap: 10px;
+}
+
+.agenda-page.agenda-fit > .agenda-view-selector {
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+.agenda-page.day-fit > .agenda-timed-card,
+.agenda-page.list-fit > .agenda-list-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.agenda-page.day-fit .calendar-heading,
+.agenda-page.list-fit .calendar-heading {
+    flex: 0 0 auto;
+}
+
+.agenda-page.day-fit .timed-scroll,
+.agenda-page.list-fit .agenda-list-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+}
+
+.agenda-page.list-fit .agenda-list-scroll {
+    padding-right: 3px;
+}
+
+@media (max-width: 1100px) {
+    .shell > main:has(.agenda-page.agenda-fit) {
+        padding: 10px 12px calc(84px + env(safe-area-inset-bottom));
+    }
+}

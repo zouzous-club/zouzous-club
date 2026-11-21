@@ -106,6 +106,7 @@ function calendar() {
             data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
             title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${events.slice(0, 2).map(entry => `<span>${eventIcon(entry)}</span>`).join('')}${eventCount > 2 ? `<span class="calendar-more">+${eventCount - 2}</span>` : ''}</span>` : ''}</button>`;
     }).join('');
+    const trailing = Array.from({ length: 42 - first - count }, () => '<div class="day blank" aria-hidden="true"></div>').join('');
 
     return `<section class="card wide">
         <div class="calendar-heading">
@@ -116,7 +117,7 @@ function calendar() {
                 <button type="button" data-month-change="1" aria-label="Mois suivant">›</button>
             </div>
         </div>
-        <div class="calendar">${headings}${blanks}${days}</div>
+        <div class="calendar">${headings}${blanks}${days}${trailing}</div>
     </section>`;
 }
 
@@ -255,7 +256,9 @@ function listView() {
 
     return `<section class="card wide agenda-list-card">
         <div class="calendar-heading"><h3>Liste des événements</h3>${addButton('events', 'un événement')}</div>
-        ${days || empty('Pas d’événement')}
+        <div class="agenda-list-scroll" tabindex="0" aria-label="Événements, liste défilante">
+            ${days || empty('Pas d’événement')}
+        </div>
     </section>`;
 }
 
@@ -322,7 +325,7 @@ function agenda() {
     ];
     const selector = `<div class="agenda-view-selector" role="group" aria-label="Affichage de l’agenda">${views.map(([id, label]) => `<button type="button" data-agenda-view="${id}" class="${agendaView === id ? 'selected' : ''}" aria-pressed="${agendaView === id}">${label}</button>`).join('')}</div>`;
     const content = agendaView === 'mois' ? monthScroll() : agendaView === 'jour' ? dayView() : listView();
-    return `<div class="grid agenda-page">${selector}${content}</div>`;
+    return `<div class="grid agenda-page agenda-fit ${agendaView === 'mois' ? 'month-fit' : agendaView === 'jour' ? 'day-fit' : 'list-fit'}">${selector}${content}</div>`;
 }
 
 function monthScroll() {
