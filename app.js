@@ -18,6 +18,8 @@ catch (error) {
 }
 let page = 'accueil';
 let displayedMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let agendaView = 'mois';
+let selectedDate = new Date().toLocaleDateString('en-CA');
 const $ = id => document.getElementById(id);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const uid = () => crypto.randomUUID();
@@ -91,53 +93,128 @@ function calendar() {
     </section>`;
 }
 
-function openDay(iso) {
-    const events = state.events
-        .filter(entry => entry.date === iso)
-        .sort((left, right) => (left.time || '00:00').localeCompare(right.time || '00:00'));
+function dateISO(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(iso, offset) {
     const date = new Date(`${iso}T12:00:00`);
-    const heading = date.toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
-    const startHour = 0;
-    const endHour = 24;
-    const slots = Array.from({ length: endHour - startHour }, (_, index) => {
-        const hour = index + startHour;
-        const eventsAtHour = events.filter(entry => {
-            return entry.time && Number(entry.time.split(':')[0]) === hour;
-        });
-        return `<div class="timeline-row">
-            <span class="timeline-hour">${String(hour).padStart(2, '0')}:00</span>
-            <div class="timeline-slot">${eventsAtHour.map(timelineEvent).join('')}</div>
-        </div>`;
-    }).join('');
-    const noTime = events.filter(entry => !entry.time);
-    $('editorTitle').textContent = heading.charAt(0).toUpperCase() + heading.slice(1);
-    $('editorBody').innerHTML = `<div class="day-details">
-        <div class="day-timeline-header">
-            <strong>${events.length} événement${events.length > 1 ? 's' : ''}</strong>
-            <button type="button" class="btn day-add-button" data-add-on-date="${iso}">+ Ajouter</button>
-        </div>
-        ${noTime.length ? `<div class="all-day-events"><strong>Sans horaire</strong>${noTime.map(timelineEvent).join('')}</div>` : ''}
-        <div class="day-timeline">${slots}</div>
-    </div>`;
-    $('editorOverlay').hidden = false;
-    $('editorOverlay').scrollTop = 0;
-    document.body.classList.add('editor-open');
+    date.setDate(date.getDate() + offset);
+    return dateISO(date);
+}
+
+function minutes(value) {
+    if (!value) return null;
+    const [hours, mins] = value.split(':').map(Number);
+    return hours * 60 + mins;
+}
+
+function eventBounds(entry) {
+    const start = minutes(entry.time);
+    if (start === null) return null;
+    const requestedEnd = minutes(entry.endTime);
+    const end = requestedEnd !== null && requestedEnd > start ? requestedEnd : start + 60;
+    return { start, end: Math.min(1440, end) };
+}
+
+function eventEditorButton(entry, label = 'Modifier') {
+    return `<button type="button" class="event-edit" data-edit-event="${escapeHtml(entry.id)}" aria-label="Modifier ${escapeHtml(entry.title)}">${label}</button>`;
 }
 
 function timelineEvent(entry) {
+    const bounds = eventBounds(entry);
+    const timeLabel = bounds ? `${entry.time} – ${String(Math.floor(bounds.end / 60)).padStart(2, '0')}:${String(bounds.end % 60).padStart(2, '0')}` : 'Toute la journée';
     return `<article class="timeline-event">
-        <div class="timeline-event-heading"><span aria-hidden="true">${eventIcon(entry)}</span><strong>${escapeHtml(entry.title)}</strong></div>
-        ${entry.time ? `<span class="timeline-event-time">${escapeHtml(entry.time)}</span>` : ''}
-        ${entry.place ? `<a class="event-location" href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)} · Ouvrir Maps</a>` : ''}
+        <div class="timeline-event-heading"><span aria-hidden="true">${eventIcon(entry)}</span><strong>${escapeHtml(entry.title)}</strong>${eventEditorButton(entry)}</div>
+        <span class="timeline-event-time">${escapeHtml(timeLabel)}</span>
+        ${entry.place ? `<a class="event-location" href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)} · Maps</a>` : ''}
     </article>`;
+}
+
+function timeGrid(iso) {
+    const entries = state.events.filter(entry => entry.date === iso);
+    const timed = entries.filter(entry => eventBounds(entry));
+    const allDay = entries.filter(entry => !eventBounds(entry));
+    const ordered = timed.map(entry => ({ entry, ...eventBounds(entry) }))
+        .sort((a, b) => a.start - b.start || b.end - a.end);
+    const clusters = [];
+    let cluster = [];
+    let clusterEnd = -1;
+    for (const event of ordered) {
+        if (cluster.length && event.start >= clusterEnd) {
+            clusters.push(cluster);
+            cluster = [];
+            clusterEnd = -1;
+        }
+        cluster.push(event);
+        clusterEnd = Math.max(clusterEnd, event.end);
+    }
+    if (cluster.length) clusters.push(cluster);
+    for (const group of clusters) {
+        const active = [];
+        let maxColumns = 0;
+        for (const event of group) {
+            for (let i = 0; i < active.length; i++) {
+                if (active[i] <= event.start) active[i] = -1;
+            }
+            let column = active.findIndex(end => end < 0);
+            if (column === -1) column = active.length;
+            active[column] = event.end;
+            event.column = column;
+            maxColumns = Math.max(maxColumns, column + 1);
+        }
+        group.forEach(event => { event.columns = maxColumns; });
+    }
+    const hours = Array.from({ length: 24 }, (_, hour) => `<div class="hour-line" style="top:${hour * 72}px"><span>${String(hour).padStart(2, '0')}:00</span></div>`).join('');
+    const blocks = ordered.map(event => {
+        const top = event.start * 72 / 60;
+        const height = Math.max(24, (event.end - event.start) * 72 / 60 - 3);
+        const left = event.column * 100 / event.columns;
+        const width = 100 / event.columns;
+        return `<article class="hour-event" style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)" data-event-card="${escapeHtml(event.entry.id)}">
+            <strong>${eventIcon(event.entry)} ${escapeHtml(event.entry.title)}</strong>
+            <small>${escapeHtml(event.entry.time)}${event.entry.endTime ? '–' + escapeHtml(event.entry.endTime) : ''}</small>
+            ${event.entry.place ? `<a href="${mapsLink(event.entry.place)}" target="_blank" rel="noopener noreferrer" class="hour-place">📍 ${escapeHtml(event.entry.place)}</a>` : ''}
+        </article>`;
+    }).join('');
+    return `<div class="day-column" data-day="${iso}">
+        <div class="day-column-title">${new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
+        ${allDay.length ? `<div class="all-day-events">${allDay.map(timelineEvent).join('')}</div>` : ''}
+        <div class="hour-grid"><div class="hour-grid-lines">${hours}</div><div class="hour-grid-events">${blocks}</div></div>
+    </div>`;
+}
+
+function dayView(twoDays = false) {
+    const dates = twoDays ? [selectedDate, addDays(selectedDate, 1)] : [selectedDate];
+    return `<section class="card wide agenda-timed-card">
+        <div class="calendar-heading"><h3>${twoDays ? 'Deux jours' : 'Journée'} · ${dateLabel(selectedDate)}</h3>
+            <div class="calendar-navigation"><button data-shift-day="-${twoDays ? 2 : 1}" aria-label="Précédent">‹</button><button data-shift-day="${twoDays ? 2 : 1}" aria-label="Suivant">›</button></div>
+        </div>
+        <div class="timed-scroll"><div class="day-columns ${twoDays ? 'two-days' : ''}">${dates.map(timeGrid).join('')}</div></div>
+    </section>`;
+}
+
+function listView() {
+    const events = [...state.events].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+    return `<section class="card wide"><div class="calendar-heading"><h3>Événements à venir</h3></div>
+        ${events.length ? events.map(entry => `<div class="agenda-list-item">
+            <div><strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong><small>${dateLabel(entry.date)}${entry.time ? ' · ' + entry.time : ''}${entry.endTime ? '–' + entry.endTime : ''}</small>
+            ${entry.place ? `<a href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)}</a>` : ''}</div>
+            ${eventEditorButton(entry)}
+        </div>`).join('') : empty('Aucun événement')}</section>`;
+}
+
+function openDay(iso) {
+    selectedDate = iso;
+    agendaView = 'jour';
+    render();
+    document.querySelector('.agenda-timed-card')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="16" height="16"></button>`;
 const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
 const editorDefinitions = {
-    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + eventCategories() + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Adresse ou lieu (ouvrable dans Maps)', 'place', 'text', false) },
+    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + eventCategories() + input('Date', 'date', 'date') + input('Heure de début', 'time', 'time', false) + input('Heure de fin (facultative)', 'endTime', 'time', false) + input('Adresse ou lieu (ouvrable dans Maps)', 'place', 'text', false) },
     polls: { title: 'Nouveau sondage', fields: input('Question', 'title') + `<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>` },
     notes: { title: 'Nouveau pense-bête', fields: input('Titre', 'title') + `<label>Contenu<textarea name="text" required></textarea></label>` },
     tasks: { title: 'Nouvelle tâche', fields: input('Tâche', 'title') },
@@ -146,11 +223,20 @@ const editorDefinitions = {
     albums: { title: 'Nouvel album', fields: input('Nom de l’album', 'title') },
     posts: { title: 'Nouvelle publication', fields: `<label>Votre message<textarea name="text" required placeholder="Quoi de neuf chez les zouzous ?"></textarea></label>` }
 };
-function openEditor(kind) {
+function openEditor(kind, editId = null) {
     const definition = editorDefinitions[kind];
     if (!definition) return;
-    $('editorTitle').textContent = definition.title;
-    $('editorBody').innerHTML = form(kind, definition.fields, kind === 'posts' ? 'Publier' : 'Ajouter');
+    const existing = kind === 'events' && editId ? state.events.find(entry => entry.id === editId) : null;
+    $('editorTitle').textContent = existing ? 'Modifier l’événement' : definition.title;
+    $('editorBody').innerHTML = form(kind, definition.fields, existing ? 'Enregistrer les modifications' : (kind === 'posts' ? 'Publier' : 'Ajouter'));
+    if (existing) {
+        const editorForm = $('editorBody').querySelector('form');
+        editorForm.dataset.editId = existing.id;
+        for (const [key, value] of Object.entries(existing)) {
+            const field = editorForm.elements.namedItem(key);
+            if (field && typeof value === 'string') field.value = value;
+        }
+    }
     $('editorOverlay').hidden = false;
     $('editorOverlay').scrollTop = 0;
     document.body.classList.add('editor-open');
@@ -162,9 +248,28 @@ function closeEditor() {
     $('editorBody').replaceChildren();
 }
 function agenda() {
-    const events = [...state.events].sort((a, b) => a.date.localeCompare(b.date));
-    return `<div class="grid">${calendar()}${section('Tous les événements', 'events', events.map(event => item(`${eventIcon(event)} ${event.title}`, `${dateLabel(event.date)}${event.time ? ' à ' + event.time : ''}${event.place ? ' · ' + event.place : ''}`, removeButton('events', event.id))).join('') || empty('Créez votre premier événement'))}</div>`;
+    const views = [
+        ['mois', 'Mois'],
+        ['deux', '2 jours'],
+        ['jour', '1 jour'],
+        ['liste', 'Liste']
+    ];
+    const selector = `<div class="agenda-view-selector" role="group" aria-label="Affichage de l’agenda">${views.map(([id, label]) => `<button type="button" data-agenda-view="${id}" class="${agendaView === id ? 'selected' : ''}" aria-pressed="${agendaView === id}">${label}</button>`).join('')}</div>`;
+    const content = agendaView === 'mois' ? monthScroll() : agendaView === 'deux' ? dayView(true) : agendaView === 'jour' ? dayView() : listView();
+    return `<div class="grid agenda-page">${selector}${content}${section('Tous les événements', 'events', [...state.events].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || '')).map(entry => `<div class="item row"><div><strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong><small>${dateLabel(entry.date)}${entry.time ? ' à ' + entry.time : ''}${entry.endTime ? '–' + entry.endTime : ''}${entry.place ? ' · ' + escapeHtml(entry.place) : ''}</small></div><div class="event-actions">${eventEditorButton(entry)}${removeButton('events', entry.id)}</div></div>`).join('') || empty('Créez votre premier événement'))}</div>`;
 }
+
+function monthScroll() {
+    const original = displayedMonth;
+    const months = [];
+    for (let index = 0; index < 4; index++) {
+        displayedMonth = new Date(original.getFullYear(), original.getMonth() + index, 1);
+        months.push(calendar());
+    }
+    displayedMonth = original;
+    return `<div class="month-scroll">${months.join('')}</div>`;
+}
+
 function organiser() {
     const posts = [...state.posts].reverse();
     return `<div class="feed-heading"><div><h3>Le fil des zouzous</h3><p class="sub">Messages et nouvelles du groupe</p></div>${addButton('posts', 'une publication')}</div><div class="feed">${posts.map(post => `<article class="card post"><div class="row"><strong>Publication</strong>${removeButton('posts', post.id)}</div><p class="post-text">${escapeHtml(post.text)}</p><small>${escapeHtml(post.createdAt || '')}</small></article>`).join('') || empty('Aucune publication pour le moment. Touchez + pour écrire un message.')}</div><p class="sub">L’ajout de photos et la synchronisation entre membres seront disponibles avec la connexion des publications à Supabase.</p>`;
@@ -213,6 +318,11 @@ function render() {
     }
 }
 document.addEventListener('click', event => {
+    const eventCard = event.target.closest('[data-event-card]');
+    if (eventCard && !event.target.closest('a')) {
+        openEditor('events', eventCard.dataset.eventCard);
+        return;
+    }
     const button = event.target.closest('button');
     if (!button)
     return;
@@ -220,6 +330,21 @@ document.addEventListener('click', event => {
         page = button.dataset.page;
         render();
         document.querySelector('.shell > main')?.scrollTo(0, 0);
+        return;
+    }
+    if (button.dataset.agendaView) {
+        agendaView = button.dataset.agendaView;
+        render();
+        return;
+    }
+    if (button.dataset.shiftDay) {
+        selectedDate = addDays(selectedDate, Number(button.dataset.shiftDay));
+        displayedMonth = new Date(`${selectedDate}T12:00:00`);
+        render();
+        return;
+    }
+    if (button.dataset.editEvent) {
+        openEditor('events', button.dataset.editEvent);
         return;
     }
     if (button.dataset.monthChange) {
@@ -314,10 +439,28 @@ document.addEventListener('submit', event => {
         formElement.reportValidity();
         return;
     }
-    state[kind].push({ id: uid(), ...data, ...(kind === 'posts' ? { createdAt: new Date().toLocaleString('fr-FR') } : {}) });
+    if (kind === 'events' && data.endTime && !data.time) {
+        formElement.elements.namedItem('time').setCustomValidity('Indiquez une heure de début.');
+        formElement.reportValidity();
+        return;
+    }
+    if (kind === 'events' && data.endTime && minutes(data.endTime) <= minutes(data.time)) {
+        formElement.elements.namedItem('endTime').setCustomValidity('L’heure de fin doit être après le début.');
+        formElement.reportValidity();
+        return;
+    }
+    const editId = formElement.dataset.editId;
+    if (kind === 'events' && editId) {
+        const existing = state.events.find(entry => entry.id === editId);
+        if (existing) Object.assign(existing, data);
+    }
+    else {
+        state[kind].push({ id: uid(), ...data, ...(kind === 'posts' ? { createdAt: new Date().toLocaleString('fr-FR') } : {}) });
+    }
     save();
     if (kind === 'events' && data.date) {
         displayedMonth = new Date(`${data.date}T12:00:00`);
+        selectedDate = data.date;
     }
     closeEditor();
     render();
