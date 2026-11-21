@@ -79,7 +79,7 @@ let sharedAgendaKnown = new Set();
 let sharedAgendaRefreshTimer = null;
 // La clé VAPID publique est injectée ici après configuration serveur.
 // Ne jamais placer la clé VAPID privée ni la clé service_role dans ce fichier.
-const pushPublicKey = ''; // À remplacer par la clé VAPID publique générée pour le projet.
+const pushPublicKey = 'BOOj4Q-uNg9VVzrPbauf_wy6DZpwzBQugyWqo24cfZyhi7o1hhX4r0BX6WKi33Sz5DvrCjnWPmWphs3OmMqmPIg'; // Clé VAPID publique uniquement.
 
 function base64UrlToUint8Array(base64Url) {
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -96,6 +96,15 @@ async function syncPushSubscription() {
     }
 
     const { client, groupId } = sharedAgenda;
+    // Sur iOS, demander la permission directement depuis le geste utilisateur,
+    // avant toute opération asynchrone qui pourrait perdre son activation.
+    if (notificationPreference && Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            updateNotificationControl('Autorisation non accordée dans les réglages de l’appareil.');
+            return;
+        }
+    }
     const registration = await navigator.serviceWorker.ready;
     let subscription = await registration.pushManager.getSubscription();
 
@@ -114,11 +123,6 @@ async function syncPushSubscription() {
     }
 
     if (!subscription) {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            updateNotificationControl('Autorisation non accordée. Vous pouvez continuer à utiliser les alertes dans l’application.');
-            return;
-        }
         subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: base64UrlToUint8Array(pushPublicKey)
@@ -177,7 +181,7 @@ function updateNotificationControl(messageOverride = '') {
     const status = document.getElementById('eventNotificationStatus');
     if (control) control.checked = notificationPreference;
     if (status) status.textContent = messageOverride || (notificationPreference
-        ? 'Alertes activées pendant l’utilisation de l’application. Les notifications en arrière-plan nécessitent une configuration push supplémentaire.'
+        ? 'Alertes activées. Pour recevoir les push en arrière-plan, autorisez les notifications sur cet appareil.'
         : 'Recevoir une alerte lorsque de nouveaux événements sont ajoutés pendant que l’application est ouverte.');
 }
 
@@ -514,7 +518,11 @@ function timeGrid(iso) {
     const entries = state.events.filter(entry => eventOccursOn(entry, iso));
     const timed = entries.filter(entry => eventBounds(entry, iso));
     const allDay = entries.filter(entry => !eventBounds(entry, iso));
-    const ordered = timed.map(entry => ({ entry, ...eventBounds(entry, iso) }))
+    // Les événements sans heure occupent toute la grille de 00:00 à 24:00.
+    const ordered = [
+        ...allDay.map(entry => ({ entry, start: 0, end: 1440, isAllDay: true })),
+        ...timed.map(entry => ({ entry, ...eventBounds(entry, iso), isAllDay: false }))
+    ]
         .sort((a, b) => a.start - b.start || b.end - a.end);
     const clusters = [];
     let cluster = [];
@@ -550,15 +558,14 @@ function timeGrid(iso) {
         const height = Math.max(24, (event.end - event.start) * 72 / 60 - 3);
         const left = event.column * 100 / event.columns;
         const width = 100 / event.columns;
-        return `<article class="hour-event" style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)" data-event-card="${escapeHtml(event.entry.id)}">
+        return `<article class="hour-event${event.isAllDay ? ' hour-event-all-day' : ''}" style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)" data-event-card="${escapeHtml(event.entry.id)}">
             <strong>${eventIcon(event.entry)} ${escapeHtml(event.entry.title)}</strong>
-            <small>${escapeHtml(eventTimeLabel(event.entry, iso))}</small>
+            <small>${escapeHtml(event.isAllDay ? 'Toute la journée' : eventTimeLabel(event.entry, iso))}</small>
             ${event.entry.place ? `<a href="${mapsLink(event.entry.place)}" target="_blank" rel="noopener noreferrer" class="hour-place">📍 ${escapeHtml(event.entry.place)}</a>` : ''}
         </article>`;
     }).join('');
     return `<div class="day-column" data-day="${iso}">
         <div class="day-column-title">${new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
-        ${allDay.length ? `<div class="all-day-events">${allDay.map(timelineEvent).join('')}</div>` : ''}
         <div class="hour-grid"><div class="hour-grid-lines">${hours}</div><div class="hour-grid-events">${blocks}</div></div>
     </div>`;
 }
@@ -620,7 +627,11 @@ function listView() {
 function focusFirstEvent() {
     const scroll = document.querySelector('.timed-scroll');
     if (!scroll) return;
-    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate) && eventBounds(entry, selectedDate));
+    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate));
+    if (dayEvents.some(entry => !eventBounds(entry, selectedDate))) {
+        scroll.scrollTop = 0;
+        return;
+    }
     if (!dayEvents.length) {
         scroll.scrollTop = 8 * 72;
         return;
@@ -630,6 +641,7 @@ function focusFirstEvent() {
 }
 
 function openDay(iso) {
+    page = 'agenda';
     selectedDate = iso;
     agendaView = 'jour';
     render();
