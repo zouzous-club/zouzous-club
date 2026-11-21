@@ -716,3 +716,96 @@ input, textarea, select, .form input, .form textarea, .form select, .auth-card i
     .tabs { z-index:40; }
 }
 
+
+/* Version 17 — navigation mensuelle et consultation d'une journée. */
+.calendar-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.calendar-heading h3 {
+    margin: 0;
+}
+.calendar-navigation {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+}
+.calendar-navigation button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #e7dcf4;
+    border-radius: 10px;
+    background: #f4edfa;
+    color: #7043ad;
+    font-size: 29px;
+    line-height: 1;
+    cursor: pointer;
+}
+.calendar-date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    border: 0;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+}
+.calendar-date:focus-visible,
+.calendar-navigation button:focus-visible {
+    outline: 3px solid #845ec2;
+    outline-offset: 2px;
+}
+.event-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.day-details {
+    display: grid;
+    gap: 14px;
+}
+.day-event {
+    padding: 14px 16px;
+    border: 1px solid #e9e0f4;
+    border-radius: 12px;
+    background: #faf7fd;
+}
+.day-event h3 {
+    margin: 0 0 10px;
+}
+.day-event p {
+    margin: 6px 0;
+}
+.add-button,
+button.add-button {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    flex: 0 0 34px !important;
+    border-radius: 10px !important;
+}
+.add-button img {
+    width: 20px;
+    height: 20px;
+}
+@media (max-width: 380px) {
+    .calendar-heading h3 {
+        font-size: 17px;
+    }
+    .calendar-navigation button {
+        width: 32px;
+        height: 32px;
+    }
+}
