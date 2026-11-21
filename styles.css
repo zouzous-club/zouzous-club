@@ -2139,3 +2139,8 @@ button.add-button img {
         overflow-wrap: anywhere;
     }
 }
+
+/* Connexion : navigation mobile toujours masquée tant que l’accès est refusé. */
+#mobileNav[hidden] {
+    display: none !important;
+}
