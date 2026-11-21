@@ -1487,3 +1487,68 @@ button.add-button img {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* V24 — Navigation inférieure : centrage des icônes et libellés, tablette comprise. */
+@media (max-width: 1100px) {
+    .tabs:not([hidden]) {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: stretch;
+        justify-content: stretch;
+        gap: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .tabs button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-width: 0;
+        min-height: 56px;
+        margin: 0;
+        padding: 7px 2px;
+        text-align: center;
+        line-height: 1.25;
+    }
+
+    .tabs .nav-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        margin: 0 auto;
+        flex: 0 0 26px;
+    }
+
+    .tabs .nav-icon {
+        display: block;
+        width: 22px;
+        height: 22px;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+}
+
+/* V24 — Les couleurs du thème sombre prévalent sur les règles tablette. */
+@media (max-width: 1100px) {
+    :root[data-theme="dark"] .tabs,
+    [data-theme="dark"] .tabs {
+        background: #211c2c;
+        border-top-color: #453a53;
+    }
+
+    :root[data-theme="dark"] .tabs button,
+    [data-theme="dark"] .tabs button {
+        background: transparent;
+        color: #c8bed2;
+    }
+
+    :root[data-theme="dark"] .tabs button.active,
+    [data-theme="dark"] .tabs button.active {
+        color: #d4b3ff;
+    }
+}
