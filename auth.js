@@ -76,72 +76,10 @@ function textElement(tag, value) {
     element.textContent = value;
     return element;
 }
+// Le formulaire de profil est désormais géré par profil-informations.js.
 async function loadPersonalProfile() {
-    if (!currentUser) {
-        return;
-    }
-
-    const input = $('personalFirstName');
-    const status = $('personalProfileMessage');
-    const { data, error } = await supabase
-        .from('profils')
-        .select('prenom')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
-    if (error) {
-        status.textContent = 'Impossible de charger votre prénom.';
-        return;
-    }
-
-    input.value = data?.prenom === 'Membre' ? '' : (data?.prenom || '');
-    status.textContent = '';
+    return;
 }
-
-$('personalProfileForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    if (!supabase || !currentUser) {
-        return;
-    }
-
-    const form = event.currentTarget;
-    const button = form.querySelector('button[type="submit"]');
-    const firstName = String(new FormData(form).get('prenom') || '').trim();
-    const status = $('personalProfileMessage');
-
-    if (!firstName || firstName.length > 60) {
-        status.textContent = 'Saisissez un prénom de 1 à 60 caractères.';
-        return;
-    }
-
-    button.disabled = true;
-
-    try {
-        const { data, error } = await supabase
-            .from('profils')
-            .update({ prenom: firstName })
-            .eq('id', currentUser.id)
-            .select('id,prenom');
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data?.length) {
-            throw new Error('Mise à jour refusée par les autorisations Supabase.');
-        }
-
-        status.textContent = 'Prénom enregistré.';
-        await loadMembers();
-    }
-    catch (error) {
-        status.textContent = `Enregistrement impossible : ${error.message}`;
-    }
-    finally {
-        button.disabled = false;
-    }
-});
 
 async function loadMembers() {
     if (!groupId)
