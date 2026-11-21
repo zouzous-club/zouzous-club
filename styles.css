@@ -2035,3 +2035,23 @@ button.add-button img {
     color: inherit;
     font-size: 25px;
 }
+
+/* V38 — Les événements sans horaire remplissent la journée entière. */
+.hour-event.hour-event-all-day {
+    min-height: 1725px;
+    background: #4b365f;
+    color: #ffffff;
+    border-left-color: #845ec2;
+}
+.hour-event.hour-event-all-day small,
+.hour-event.hour-event-all-day .hour-place {
+    color: #f0e5fa;
+}
+[data-theme="light"] .hour-event.hour-event-all-day {
+    background: #e9ddf5;
+    color: #332344;
+}
+[data-theme="light"] .hour-event.hour-event-all-day small,
+[data-theme="light"] .hour-event.hour-event-all-day .hour-place {
+    color: #5a426e;
+}
