@@ -1552,3 +1552,32 @@ button.add-button img {
         color: #d4b3ff;
     }
 }
+
+/* V25 — Libellé actif de la navigation inférieure assorti à son icône.
+   Les couleurs restent identiques en mode clair et en mode sombre. */
+@media (max-width: 1100px) {
+    .tabs button.active[data-page="accueil"],
+    :root[data-theme="dark"] .tabs button.active[data-page="accueil"] {
+        color: #845EC2;
+    }
+
+    .tabs button.active[data-page="agenda"],
+    :root[data-theme="dark"] .tabs button.active[data-page="agenda"] {
+        color: #D65DB1;
+    }
+
+    .tabs button.active[data-page="organiser"],
+    :root[data-theme="dark"] .tabs button.active[data-page="organiser"] {
+        color: #FF6F91;
+    }
+
+    .tabs button.active[data-page="partage"],
+    :root[data-theme="dark"] .tabs button.active[data-page="partage"] {
+        color: #FF9671;
+    }
+
+    .tabs button.active[data-page="groupe"],
+    :root[data-theme="dark"] .tabs button.active[data-page="groupe"] {
+        color: #FFC75F;
+    }
+}
