@@ -1,20 +1,58 @@
-																																																																							// Ne met jamais en cache les réponses Supabase, les sessions ou les pages HTML authentifiées.
-																														const CACHE = 'zouzous-club-assets-v6';
-																																																																																																								const STATIC = ['./icon.svg', './icon-180.png', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
-																																	self.addEventListener('install', event => {
-																																																										event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
-																			self.skipWaiting();
-			});
-																																	self.addEventListener('activate', event => {
-																																																																																																	event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))));
-																				self.clients.claim();
-			});
-																															self.addEventListener('fetch', event => {
-																																																																	// Mode réseau uniquement : pas de copie hors ligne des pages ou données privées.
-																																	if (event.request.mode === 'navigate')
-														return;
-																																																																									if (!STATIC.some(path => new URL(path, self.registration.scope).href === event.request.url))
-														return;
-																																																																						event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request)));
-			});
+// Zouzous Club — Service Worker.
+// Les pages, sessions et données privées ne sont jamais mises en cache.
 
+const CACHE = 'zouzous-club-assets-v16b';
+
+const STATIC = [
+    './icon.svg',
+    './icon-180.png',
+    './icon-192.png',
+    './icon-512.png',
+    './manifest.webmanifest'
+];
+
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE).then((cache) => {
+            return cache.addAll(STATIC);
+        })
+    );
+
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            const anciensCaches = keys.filter((key) => key !== CACHE);
+
+            return Promise.all(
+                anciensCaches.map((key) => caches.delete(key))
+            );
+        })
+    );
+
+    self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+    // Les pages HTML et les requêtes privées restent en mode réseau uniquement.
+    if (event.request.mode === 'navigate') {
+        return;
+    }
+
+    const ressourceStatique = STATIC.some((path) => {
+        const url = new URL(path, self.registration.scope);
+        return url.href === event.request.url;
+    });
+
+    if (!ressourceStatique) {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request).then((reponseCache) => {
+            return reponseCache || fetch(event.request);
+        })
+    );
+});
