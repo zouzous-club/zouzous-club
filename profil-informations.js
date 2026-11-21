@@ -5,6 +5,40 @@ let client = null;
 let activeGroupId = null;
 let activeUser = null;
 let avatarPath = null;
+let editing = false;
+
+function formatBirthday(value) {
+    if (!value) return 'Non renseigné';
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? 'Non renseigné' : date.toLocaleDateString('fr-FR', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+}
+
+function refreshPublicProfile() {
+    const name = $('profilePseudo').value.trim() || 'Mon profil';
+    $('profilePublicName').textContent = name;
+    $('profilePublicBirthday').textContent = formatBirthday($('profileBirthday').value);
+    $('profilePublicCity').textContent = $('profileCity').value.trim() || 'Non renseignée';
+    $('profilePublicBio').textContent = $('profileBio').value.trim() || 'Aucune présentation pour le moment.';
+    $('profilePublicInterests').textContent = $('profileInterests').value.trim() || 'Non renseignés';
+}
+
+function setProfileEdit(next) {
+    editing = Boolean(next);
+    $('profilePublicView').hidden = editing;
+    $('profileEditView').hidden = !editing;
+    const button = $('privateSpaceButton');
+    if (button && !$('accountPage').hidden) button.textContent = editing ? 'Retour' : 'Modifier';
+    if (!editing) refreshPublicProfile();
+    document.querySelector('.shell > main')?.scrollTo(0, 0);
+}
+
+window.zouzousProfileSetEdit = setProfileEdit;
+window.zouzousProfileToggleEdit = () => setProfileEdit(!editing);
+window.zouzousProfileIsEditing = () => editing;
+
 
 function setStatus(id, message, error = false) {
     const element = $(id);
@@ -20,9 +54,12 @@ function safeFileName(file) {
 async function showAvatar(path) {
     const image = $('profileAvatarPreview');
     image.src = './icon-192.png';
+    $('profilePublicAvatar').src = image.src;
     if (!path || !client) return;
     const { data, error } = await client.storage.from('avatars-zouzous').createSignedUrl(path, 3600);
     if (!error && data?.signedUrl) image.src = data.signedUrl;
+    const publicImage = $('profilePublicAvatar');
+    if (publicImage) publicImage.src = image.src;
 }
 
 async function loadProfile() {
@@ -44,6 +81,7 @@ async function loadProfile() {
     $('profileAccountEmail').textContent = activeUser.email || '';
     avatarPath = data?.avatar_url || null;
     await showAvatar(avatarPath);
+    refreshPublicProfile();
     setStatus('profileV44Status', '');
 }
 
@@ -90,6 +128,8 @@ $('profileV44Form').addEventListener('submit', async event => {
         if (error) throw error;
         if (!data?.length) throw new Error('Enregistrement refusé par Supabase.');
         $('profileDisplayName').textContent = pseudo;
+        refreshPublicProfile();
+        setProfileEdit(false);
         setStatus('profileV44Status', 'Profil enregistré avec succès.');
     } catch (error) {
         setStatus('profileV44Status', `Enregistrement impossible : ${error.message}`, true);

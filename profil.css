@@ -66,3 +66,15 @@
 #profileV44Status, #profilePhotoStatus, #profilePasswordStatus { overflow-wrap: anywhere; }
 #profileAccountEmail { overflow-wrap: anywhere; }
 @media (max-width: 480px) { .profile-avatar { width: 76px; height: 76px; } .profile-heading { gap: 12px; } }
+
+
+/* Fiche personnelle en consultation : même contenu que la future fiche membre. */
+#profilePublicView { display: grid; gap: 18px; }
+#profilePublicView[hidden], #profileEditView[hidden] { display: none !important; }
+#profileEditView { display: grid; gap: 18px; }
+.profile-public-details dl { margin: 0; display: grid; gap: 16px; }
+.profile-public-details dl > div { padding-bottom: 14px; border-bottom: 1px solid rgba(150,130,175,.22); }
+.profile-public-details dl > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.profile-public-details dt { font-weight: 700; margin-bottom: 6px; }
+.profile-public-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+@media (max-width: 700px) { #profilePublicView, #profileEditView { gap: 12px; } }

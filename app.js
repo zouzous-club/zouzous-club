@@ -868,6 +868,8 @@ function render() {
     content.hidden = isCircle || isAccount;
     if (profilePage) profilePage.hidden = !isCircle;
     if (accountPage) accountPage.hidden = !isAccount;
+    const profileButton = $('privateSpaceButton');
+    if (profileButton) profileButton.textContent = isAccount ? (window.zouzousProfileIsEditing?.() ? 'Retour' : 'Modifier') : 'Mon profil';
     if (notice) notice.hidden = isCircle || isAccount;
     applyTheme();
 }
@@ -938,6 +940,11 @@ document.addEventListener('click', async event => {
         return;
     }
     if (button.id === 'privateSpaceButton') {
+        if (page === 'compte') {
+            window.zouzousProfileToggleEdit?.();
+            return;
+        }
+        window.zouzousProfileSetEdit?.(false);
         page = 'compte';
         render();
         document.querySelector('.shell > main')?.scrollTo(0, 0);

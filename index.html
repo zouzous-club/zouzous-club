@@ -15,9 +15,9 @@
 		<link href="./icon.svg" rel="icon" type="image/svg+xml"/>
 		<link href="./icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
-		<link href="./styles.css?v=44-connexion-corrigee" rel="stylesheet"/>
+		<link href="./styles.css?v=45-connexion-corrigee" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
-		<link href="./profil.css?v=44" rel="stylesheet"/>
+		<link href="./profil.css?v=45" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
 	</head>
 	<body>
@@ -112,6 +112,27 @@
 				<div aria-live="polite" id="content">
 				</div>
                 <section id="accountPage" class="profile-page" hidden>
+                    <section id="profilePublicView" class="profile-public-view" aria-label="Ma fiche membre">
+                        <section class="card profile-intro">
+                            <div class="profile-heading">
+                                <img id="profilePublicAvatar" class="profile-avatar" src="./icon-192.png" alt="Photo de profil" />
+                                <div>
+                                    <h3 id="profilePublicName">Mon profil</h3>
+                                    <p>Mon profil dans Zouzous Club · Espace privé</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="card profile-public-details">
+                            <h3>À propos de moi</h3>
+                            <dl>
+                                <div><dt>Anniversaire</dt><dd id="profilePublicBirthday">Non renseigné</dd></div>
+                                <div><dt>Ville</dt><dd id="profilePublicCity">Non renseignée</dd></div>
+                                <div><dt>Présentation</dt><dd id="profilePublicBio">Aucune présentation pour le moment.</dd></div>
+                                <div><dt>Centres d’intérêt</dt><dd id="profilePublicInterests">Non renseignés</dd></div>
+                            </dl>
+                        </section>
+                    </section>
+                    <div id="profileEditView" hidden>
                     <section class="card profile-intro">
                         <div class="profile-heading">
                             <img id="profileAvatarPreview" class="profile-avatar" src="./icon-192.png" alt="Photo de profil" />
@@ -164,6 +185,7 @@
                         <button class="btn secondary" id="profilePasswordReset" type="button">Recevoir un lien pour changer mon mot de passe</button>
                         <p id="profilePasswordStatus" role="status" aria-live="polite"></p>
                     </section>
+                    </div>
                 </section>
 				<section id="profilePage" class="profile-page" hidden>
 					<section class="card profile-intro"><h3>Mon cercle</h3><p>Retrouvez les membres et les accès de votre cercle.</p></section>
@@ -222,12 +244,12 @@
 		<div id="editorBody"></div>
 	</div>
 </div>
-<script defer src="./app.js?v=44">
+<script defer src="./app.js?v=45">
 		</script>
 		
 		<script src="./auth.js?v=44-connexion-corrigee" type="module">
 		</script>
-        <script src="./profil-informations.js?v=44" type="module"></script>
+        <script src="./profil-informations.js?v=45" type="module"></script>
 	</body>
 </html>
 
