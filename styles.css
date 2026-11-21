@@ -1899,3 +1899,139 @@ button.add-button img {
     flex-wrap: wrap;
     gap: 10px;
 }
+
+/* V35 — accueil plus lisible et compact. */
+.home-grid > .card:first-child {
+    grid-column: 1 / -1;
+}
+.home-events {
+    display: grid;
+    gap: 7px;
+}
+.home-event {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line, #eae5f0);
+    border-radius: 13px;
+    background: rgba(132, 94, 194, 0.08);
+    color: inherit;
+    text-align: left;
+}
+.home-event-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(132, 94, 194, 0.17);
+    font-size: 23px;
+}
+.home-event-info {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+.home-event-info strong {
+    overflow-wrap: anywhere;
+}
+.home-event-info small {
+    color: #85778e;
+    font-size: 12px;
+}
+.home-event-chevron {
+    color: #845ec2;
+    font-size: 26px;
+}
+[data-theme="dark"] .home-event {
+    background: #30273d;
+    border-color: #4b3c5c;
+}
+[data-theme="dark"] .home-event-info small {
+    color: #c8b7d6;
+}
+@media (max-width: 640px) {
+    .home-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* V35 — même hauteur pour les dates et les autres champs sur iOS. */
+#editorBody .form input,
+#editorBody .form select {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    line-height: normal;
+    -webkit-appearance: none;
+    appearance: none;
+}
+#editorBody .form input[type="date"],
+#editorBody .form input[type="time"] {
+    text-align: left;
+    color: inherit;
+}
+#editorBody .form input[type="date"]::-webkit-date-and-time-value,
+#editorBody .form input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1em;
+}
+#editorBody .form input[type="date"]::-webkit-calendar-picker-indicator,
+#editorBody .form input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0.8;
+}
+
+/* V35 — alertes uniquement lorsque l’application est ouverte. */
+.notification-preference {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+.notification-preference input {
+    width: 19px;
+    height: 19px;
+    accent-color: #845ec2;
+}
+.notification-status {
+    margin-top: 12px;
+    font-size: 13px;
+}
+.new-event-notice {
+    position: fixed;
+    z-index: 9999;
+    top: max(14px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(92vw, 460px);
+    padding: 13px 16px;
+    border: 1px solid #845ec2;
+    border-radius: 14px;
+    background: #2b2038;
+    color: #fff;
+    box-shadow: 0 8px 30px #0005;
+    font-size: 14px;
+}
+.new-event-notice span {
+    flex: 1;
+}
+.new-event-notice button {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 25px;
+}

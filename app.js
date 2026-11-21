@@ -60,9 +60,7 @@ const eventTypes = {
     autre: { label: 'Autre', icon: '🤷' }
 };
 const eventOccursOn = (entry, iso) => entry.date <= iso && (entry.endDate || entry.date) >= iso;
-const eventIcon = event => event.category === 'fete'
-    ? '<img class="disco-icon" src="./disco.svg" alt="🪩" title="Boule disco">'
-    : (eventTypes[event.category]?.icon || eventTypes.autre.icon);
+const eventIcon = event => eventTypes[event.category]?.icon || eventTypes.autre.icon;
 const mapsLink = address => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 const eventCategories = () => `<label>Type d’événement
     <select name="category" required>
@@ -76,6 +74,59 @@ const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
 let sharedAgenda = null;
 let sharedAgendaLoading = false;
 let sharedAgendaError = '';
+let sharedAgendaInitialized = false;
+let sharedAgendaKnown = new Set();
+let sharedAgendaRefreshTimer = null;
+const notificationKey = 'zouzous-club-notifications';
+let notificationPreference = localStorage.getItem(notificationKey) === 'oui';
+
+function showNewEventNotice(events) {
+    if (!events.length || !notificationPreference) return;
+    const title = events.length === 1 ? 'Nouvel événement dans le cercle' : `${events.length} nouveaux événements`;
+    const message = events.length === 1 ? events[0].title : 'Ouvrez l’agenda pour les consulter.';
+    let notice = document.getElementById('zouzousNewEventNotice');
+    if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'zouzousNewEventNotice';
+        notice.className = 'new-event-notice';
+        notice.setAttribute('role', 'status');
+        notice.setAttribute('aria-live', 'polite');
+        document.body.append(notice);
+    }
+    notice.replaceChildren();
+    const content = document.createElement('span');
+    content.textContent = `${title} · ${message}`;
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '×';
+    close.setAttribute('aria-label', 'Fermer la notification');
+    close.addEventListener('click', () => notice.remove());
+    notice.append(content, close);
+    if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+        try {
+            new Notification(title, { body: message, icon: './icon-192.png' });
+        }
+        catch (error) {
+            console.info('Notification système indisponible.', error);
+        }
+    }
+}
+
+function updateNotificationControl() {
+    const control = document.getElementById('eventNotificationToggle');
+    const status = document.getElementById('eventNotificationStatus');
+    if (control) control.checked = notificationPreference;
+    if (status) status.textContent = notificationPreference
+        ? 'Alertes activées pendant l’utilisation de l’application. Les notifications en arrière-plan nécessitent une configuration push supplémentaire.'
+        : 'Recevoir une alerte lorsque de nouveaux événements sont ajoutés pendant que l’application est ouverte.';
+}
+
+document.getElementById('eventNotificationToggle')?.addEventListener('change', event => {
+    notificationPreference = event.target.checked;
+    localStorage.setItem(notificationKey, notificationPreference ? 'oui' : 'non');
+    updateNotificationControl();
+});
+updateNotificationControl();
 
 function eventFromDatabase(row) {
     return {
@@ -113,7 +164,13 @@ async function loadSharedEvents() {
             return;
         }
 
-        state.events = (data || []).map(eventFromDatabase);
+        const fresh = (data || []).map(eventFromDatabase);
+        if (sharedAgendaInitialized) {
+            showNewEventNotice(fresh.filter(entry => !sharedAgendaKnown.has(entry.id)));
+        }
+        sharedAgendaKnown = new Set(fresh.map(entry => entry.id));
+        sharedAgendaInitialized = true;
+        state.events = fresh;
         sharedAgendaError = '';
         render();
     }
@@ -144,12 +201,22 @@ window.addEventListener('zouzous:membership', event => {
 
     if (!client || !groupId) {
         sharedAgenda = null;
+        sharedAgendaInitialized = false;
+        sharedAgendaKnown.clear();
+        if (sharedAgendaRefreshTimer) clearInterval(sharedAgendaRefreshTimer);
+        sharedAgendaRefreshTimer = null;
         state.events = [];
         render();
         return;
     }
 
+    if (sharedAgendaRefreshTimer) clearInterval(sharedAgendaRefreshTimer);
     sharedAgenda = { client, groupId };
+    sharedAgendaInitialized = false;
+    sharedAgendaKnown.clear();
+    sharedAgendaRefreshTimer = setInterval(() => {
+        if (document.visibilityState === 'visible') void loadSharedEvents();
+    }, 45000);
     sharedAgendaError = '';
     state.events = [];
     render();
@@ -224,10 +291,32 @@ const upcoming = () => [...state.events].filter(event => event.date >= dateISO(n
 function home() {
     const today = dateISO(new Date());
     const lastDay = addDays(today, 30);
-    const next = [...state.events].filter(event => (event.endDate || event.date) >= today && event.date <= lastDay).sort((a, b) => a.date.localeCompare(b.date));
+    const next = [...state.events]
+        .filter(event => (event.endDate || event.date) >= today && event.date <= lastDay)
+        .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time));
     const openPolls = state.polls.filter(poll => !poll.closed);
-    return `<div class="grid">${card('📅 Prochains événements', next.length ? next.map(event => item(event.title, dateLabel(event.date))).join('') : empty('Aucun événement à venir'))}${card('🗳️ Sondages ouverts', openPolls.length ? openPolls.map(poll => item(poll.title, `${poll.options.length} propositions`)).join('') : empty('Aucun sondage en cours'))}${card('📝 Pense-bêtes', state.notes.slice(-3).reverse().map(note => item(note.title, note.text)).join('') || empty('Aucune note'))}${card('✅ Tâches à faire', state.tasks.filter(task => !task.done).slice(0, 5).map(task => item(task.title, 'À réaliser')).join('') || empty('Tout est à jour !'))}</div>`;
+    const nextContent = next.length
+        ? `<div class="home-events">${next.map(event => {
+            const firstVisibleDay = event.date < today ? today : event.date;
+            const dateText = (event.endDate || event.date) > event.date
+                ? `${dateLabel(firstVisibleDay)} → ${dateLabel(event.endDate)}`
+                : dateLabel(firstVisibleDay);
+            const hour = event.time && event.date >= today ? ` · ${escapeHtml(event.time.slice(0, 5))}` : '';
+            return `<button type="button" class="home-event" data-open-event="${escapeHtml(event.id)}">
+                <span class="home-event-icon" aria-hidden="true">${eventIcon(event)}</span>
+                <span class="home-event-info"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(dateText)}${hour}</small></span>
+                <span class="home-event-chevron" aria-hidden="true">›</span>
+            </button>`;
+        }).join('')}</div>`
+        : empty('Aucun événement à venir dans les 31 prochains jours');
+    return `<div class="grid home-grid">
+        ${card('📅 Prochains événements', nextContent, true)}
+        ${card('🗳️ Sondages ouverts', openPolls.length ? openPolls.map(poll => item(poll.title, `${poll.options.length} propositions`)).join('') : empty('Aucun sondage en cours'))}
+        ${card('📝 Pense-bêtes', state.notes.slice(-3).reverse().map(note => item(note.title, note.text)).join('') || empty('Aucune note'))}
+        ${card('✅ Tâches à faire', state.tasks.filter(task => !task.done).slice(0, 5).map(task => item(task.title, 'À réaliser')).join('') || empty('Tout est à jour !'))}
+    </div>`;
 }
+
 function calendar() {
     const year = displayedMonth.getFullYear();
     const month = displayedMonth.getMonth();
@@ -331,16 +420,17 @@ function eventBounds(entry, iso = entry.date) {
 }
 
 function eventTimeLabel(entry, iso) {
-    const bounds = eventBounds(entry, iso);
-    if (!bounds) {
-        return 'Toute la journée';
+    const first = entry.date;
+    const last = entry.endDate || first;
+    const start = minutes(entry.time);
+    const finish = minutes(entry.endTime);
+    if (start === null) return 'Toute la journée';
+    if (first === last) {
+        return finish === null ? entry.time.slice(0, 5) : `${entry.time.slice(0, 5)} – ${entry.endTime.slice(0, 5)}`;
     }
-
-    const format = value => value === 1440
-        ? '24:00'
-        : `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
-
-    return `${format(bounds.start)} – ${format(bounds.end)}`;
+    if (iso === first) return `Début : ${entry.time.slice(0, 5)}`;
+    if (iso === last) return finish === null ? 'Toute la journée' : `Fin : ${entry.endTime.slice(0, 5)}`;
+    return 'Toute la journée';
 }
 
 function eventEditorButton(entry, label = 'Modifier') {
@@ -449,7 +539,7 @@ function listView() {
                 <strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong>
                 ${entry.place ? `<a href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)}</a>` : ''}
             </div>
-            <div class="agenda-list-hours">${entry.time ? `<span>${escapeHtml(entry.time)}</span><small>${escapeHtml(entry.endTime || '')}</small>` : '<span>Journée</span>'}${entry.endDate && entry.endDate !== entry.date ? `<small>Du ${escapeHtml(dateLabel(entry.date))} au ${escapeHtml(dateLabel(entry.endDate))}</small>` : ''}</div>
+            <div class="agenda-list-hours"><span>${escapeHtml(eventTimeLabel(entry, date))}</span></div>
         </article>`).join('');
 
         return `<section class="agenda-list-day"><h3>${escapeHtml(heading)}</h3>${items}</section>`;
@@ -616,6 +706,11 @@ document.addEventListener('keydown', event => {
 });
 
 document.addEventListener('click', async event => {
+    const homeEvent = event.target.closest('[data-open-event]');
+    if (homeEvent) {
+        openEditor('events', homeEvent.dataset.openEvent);
+        return;
+    }
     const eventCard = event.target.closest('[data-event-card]');
     if (eventCard && !event.target.closest('a')) {
         openEditor('events', eventCard.dataset.eventCard);
