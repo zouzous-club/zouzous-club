@@ -51,12 +51,15 @@ const eventTypes = {
     restaurant: { label: 'Restaurant', icon: '🍽️' },
     cinema: { label: 'Cinéma', icon: '🎬' },
     sport: { label: 'Sport', icon: '⚽' },
-    concert: { label: 'Concert', icon: '🎵' },
-    fete: { label: 'Fête', icon: '🎉' },
+    concert: { label: 'Concert', icon: '🎤' },
+    fete: { label: 'Fête', icon: '🪩' },
     voyage: { label: 'Voyage', icon: '✈️' },
     cafe: { label: 'Café', icon: '☕' },
-    autre: { label: 'Autre', icon: '📅' }
+    cocooning: { label: 'Cocooning', icon: '🧸' },
+    shopping: { label: 'Shopping', icon: '🛍️' },
+    autre: { label: 'Autre', icon: '🤷' }
 };
+const eventOccursOn = (entry, iso) => entry.date <= iso && (entry.endDate || entry.date) >= iso;
 const eventIcon = event => eventTypes[event.category]?.icon || eventTypes.autre.icon;
 const mapsLink = address => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 const eventCategories = () => `<label>Type d’événement
@@ -78,6 +81,7 @@ function eventFromDatabase(row) {
         title: row.titre,
         category: row.categorie,
         date: row.date_evenement,
+        endDate: row.date_fin || row.date_evenement,
         time: row.heure_debut || '',
         endTime: row.heure_fin || '',
         place: row.lieu || ''
@@ -95,7 +99,7 @@ async function loadSharedEvents() {
     try {
         const { data, error } = await connection.client
             .from('evenements_zouzous')
-            .select('id,titre,categorie,date_evenement,heure_debut,heure_fin,lieu')
+            .select('id,titre,categorie,date_evenement,date_fin,heure_debut,heure_fin,lieu')
             .eq('groupe_id', connection.groupId)
             .order('date_evenement', { ascending: true });
 
@@ -159,6 +163,7 @@ async function writeSharedEvent(data, editId) {
         titre: data.title.trim(),
         categorie: data.category,
         date_evenement: data.date,
+        date_fin: data.endDate || data.date,
         heure_debut: data.time || null,
         heure_fin: data.endTime || null,
         lieu: data.place?.trim() || null
@@ -217,7 +222,7 @@ const upcoming = () => [...state.events].filter(event => event.date >= dateISO(n
 function home() {
     const today = dateISO(new Date());
     const lastDay = addDays(today, 30);
-    const next = upcoming().filter(event => event.date <= lastDay);
+    const next = [...state.events].filter(event => (event.endDate || event.date) >= today && event.date <= lastDay).sort((a, b) => a.date.localeCompare(b.date));
     const openPolls = state.polls.filter(poll => !poll.closed);
     return `<div class="grid">${card('📅 Prochains événements', next.length ? next.map(event => item(event.title, dateLabel(event.date))).join('') : empty('Aucun événement à venir'))}${card('🗳️ Sondages ouverts', openPolls.length ? openPolls.map(poll => item(poll.title, `${poll.options.length} propositions`)).join('') : empty('Aucun sondage en cours'))}${card('📝 Pense-bêtes', state.notes.slice(-3).reverse().map(note => item(note.title, note.text)).join('') || empty('Aucune note'))}${card('✅ Tâches à faire', state.tasks.filter(task => !task.done).slice(0, 5).map(task => item(task.title, 'À réaliser')).join('') || empty('Tout est à jour !'))}</div>`;
 }
@@ -242,7 +247,7 @@ function calendar() {
     const days = Array.from({ length: count }, (_, index) => {
         const day = index + 1;
         const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const events = state.events.filter(entry => entry.date === iso);
+        const events = state.events.filter(entry => eventOccursOn(entry, iso));
         const eventCount = events.length;
         const accessibleLabel = `${dateLabel(iso)} : ${eventCount} événement${eventCount > 1 ? 's' : ''}`;
 
@@ -307,9 +312,9 @@ function timelineEvent(entry) {
 }
 
 function timeGrid(iso) {
-    const entries = state.events.filter(entry => entry.date === iso);
-    const timed = entries.filter(entry => eventBounds(entry));
-    const allDay = entries.filter(entry => !eventBounds(entry));
+    const entries = state.events.filter(entry => eventOccursOn(entry, iso));
+    const timed = entries.filter(entry => eventBounds(entry) && entry.date === iso);
+    const allDay = entries.filter(entry => !eventBounds(entry) || entry.date !== iso);
     const ordered = timed.map(entry => ({ entry, ...eventBounds(entry) }))
         .sort((a, b) => a.start - b.start || b.end - a.end);
     const clusters = [];
@@ -374,11 +379,15 @@ function listView() {
     const grouped = new Map();
 
     for (const entry of events) {
-        if (!grouped.has(entry.date)) {
-            grouped.set(entry.date, []);
+        let day = entry.date;
+        const end = entry.endDate || entry.date;
+        while (day <= end) {
+            if (!grouped.has(day)) {
+                grouped.set(day, []);
+            }
+            grouped.get(day).push(entry);
+            day = addDays(day, 1);
         }
-
-        grouped.get(entry.date).push(entry);
     }
 
     const days = [...grouped.entries()].map(([date, entries]) => {
@@ -395,7 +404,7 @@ function listView() {
                 <strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong>
                 ${entry.place ? `<a href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)}</a>` : ''}
             </div>
-            <div class="agenda-list-hours">${entry.time ? `<span>${escapeHtml(entry.time)}</span><small>${escapeHtml(entry.endTime || '')}</small>` : '<span>Journée</span>'}</div>
+            <div class="agenda-list-hours">${entry.time ? `<span>${escapeHtml(entry.time)}</span><small>${escapeHtml(entry.endTime || '')}</small>` : '<span>Journée</span>'}${entry.endDate && entry.endDate !== entry.date ? `<small>Du ${escapeHtml(dateLabel(entry.date))} au ${escapeHtml(dateLabel(entry.endDate))}</small>` : ''}</div>
         </article>`).join('');
 
         return `<section class="agenda-list-day"><h3>${escapeHtml(heading)}</h3>${items}</section>`;
@@ -412,7 +421,7 @@ function listView() {
 function focusFirstEvent() {
     const scroll = document.querySelector('.timed-scroll');
     if (!scroll) return;
-    const dayEvents = state.events.filter(entry => entry.date === selectedDate && eventBounds(entry));
+    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate) && eventBounds(entry));
     if (!dayEvents.length) {
         scroll.scrollTop = 8 * 72;
         return;
@@ -431,7 +440,7 @@ function openDay(iso) {
 const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="16" height="16"></button>`;
 const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
 const editorDefinitions = {
-    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + eventCategories() + input('Date', 'date', 'date') + input('Heure de début', 'time', 'time', false) + input('Heure de fin (facultative)', 'endTime', 'time', false) + input('Adresse ou lieu (ouvrable dans Maps)', 'place', 'text', false) },
+    events: { title: 'Nouvel événement', fields: input('Titre', 'title') + eventCategories() + input('Date de début', 'date', 'date') + input('Date de fin', 'endDate', 'date') + input('Heure de début', 'time', 'time', false) + input('Heure de fin (facultative)', 'endTime', 'time', false) + input('Adresse ou lieu (ouvrable dans Maps)', 'place', 'text', false) },
     polls: { title: 'Nouveau sondage', fields: input('Question', 'title') + `<label>Choix proposés (un par ligne)<textarea name="options" required placeholder="Vendredi soir\nSamedi midi\nDimanche"></textarea></label>` },
     notes: { title: 'Nouveau pense-bête', fields: input('Titre', 'title') + `<label>Contenu<textarea name="text" required></textarea></label>` },
     tasks: { title: 'Nouvelle tâche', fields: input('Tâche', 'title') },
@@ -453,6 +462,12 @@ function openEditor(kind, editId = null) {
             const field = editorForm.elements.namedItem(key);
             if (field && typeof value === 'string') field.value = value;
         }
+    }
+    if (kind === 'events' && !existing) {
+        const editorForm = $('editorBody').querySelector('form');
+        const today = dateISO(new Date());
+        editorForm.elements.namedItem('date').value = selectedDate || today;
+        editorForm.elements.namedItem('endDate').value = selectedDate || today;
     }
     $('editorOverlay').hidden = false;
     $('editorOverlay').scrollTop = 0;
@@ -674,12 +689,17 @@ document.addEventListener('submit', async event => {
         formElement.reportValidity();
         return;
     }
+    if (kind === 'events' && data.endDate < data.date) {
+        formElement.elements.namedItem('endDate').setCustomValidity('La date de fin doit être égale ou postérieure à la date de début.');
+        formElement.reportValidity();
+        return;
+    }
     if (kind === 'events' && data.endTime && !data.time) {
         formElement.elements.namedItem('time').setCustomValidity('Indiquez une heure de début.');
         formElement.reportValidity();
         return;
     }
-    if (kind === 'events' && data.endTime && minutes(data.endTime) <= minutes(data.time)) {
+    if (kind === 'events' && data.endTime && data.endDate === data.date && minutes(data.endTime) <= minutes(data.time)) {
         formElement.elements.namedItem('endTime').setCustomValidity('L’heure de fin doit être après le début.');
         formElement.reportValidity();
         return;
