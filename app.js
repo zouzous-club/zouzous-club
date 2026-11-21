@@ -92,9 +92,13 @@ function calendar() {
     });
 
     const headings = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
-        .map(day => `<div class="day head">${day}</div>`)
+        .map(day => `<div class="day head" aria-hidden="true">${day}</div>`)
         .join('');
-    const blanks = Array.from({ length: first }, () => '<div class="day blank"></div>').join('');
+    const blanks = Array.from({ length: first }, (_, index) => {
+        const previousDate = new Date(year, month, index - first + 1);
+        const previousDay = previousDate.getDate();
+        return `<div class="day calendar-outside" aria-hidden="true"><span class="day-number">${previousDay}</span></div>`;
+    }).join('');
     const days = Array.from({ length: count }, (_, index) => {
         const day = index + 1;
         const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -102,11 +106,14 @@ function calendar() {
         const eventCount = events.length;
         const accessibleLabel = `${dateLabel(iso)} : ${eventCount} événement${eventCount > 1 ? 's' : ''}`;
 
-        return `<button type="button" class="day calendar-date ${eventCount ? 'has' : ''}"
+        return `<button type="button" class="day calendar-date weekday-${(first + index) % 7} ${eventCount ? 'has' : ''}"
             data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
             title="${escapeHtml(accessibleLabel)}">${'<span class="day-number">' + day + '</span>'}${eventCount ? `<span class="day-event-icons" aria-hidden="true">${events.slice(0, 2).map(entry => `<span>${eventIcon(entry)}</span>`).join('')}${eventCount > 2 ? `<span class="calendar-more">+${eventCount - 2}</span>` : ''}</span>` : ''}</button>`;
     }).join('');
-    const trailing = Array.from({ length: 42 - first - count }, () => '<div class="day blank" aria-hidden="true"></div>').join('');
+    const trailing = Array.from({ length: 42 - first - count }, (_, index) => {
+        const nextDay = index + 1;
+        return `<div class="day calendar-outside" aria-hidden="true"><span class="day-number">${nextDay}</span></div>`;
+    }).join('');
 
     return `<section class="card wide">
         <div class="calendar-heading">
