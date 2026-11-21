@@ -15,9 +15,9 @@
 		<link href="./icon.svg" rel="icon" type="image/svg+xml"/>
 		<link href="./icon-192.png" rel="icon" sizes="192x192" type="image/png"/>
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
-		<link href="./styles.css?v=42" rel="stylesheet"/>
+		<link href="./styles.css?v=44" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
-		<link href="./profil.css" rel="stylesheet"/>
+		<link href="./profil.css?v=44" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
 	</head>
 	<body>
@@ -113,8 +113,35 @@
 				</div>
                 <section id="accountPage" class="profile-page" hidden>
                     <section class="card profile-intro">
-                        <h3>Mon profil</h3>
-                        <p>Paramètres personnels de votre compte.</p>
+                        <div class="profile-heading">
+                            <img id="profileAvatarPreview" class="profile-avatar" src="./icon-192.png" alt="Photo de profil" />
+                            <div><h3 id="profileDisplayName">Mon profil</h3><p>Votre identité dans Zouzous Club · Espace privé</p></div>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h3>Mes informations</h3>
+                        <form id="profileV44Form" class="form">
+                            <label for="profilePseudo">Pseudonyme *</label>
+                            <input id="profilePseudo" maxlength="60" required autocomplete="nickname" placeholder="Votre pseudo" />
+                            <label for="profileBirthday">Date de naissance (visible dans le groupe)</label>
+                            <input id="profileBirthday" type="date" />
+                            <label for="profileBio">Présentation</label>
+                            <textarea id="profileBio" maxlength="500" rows="4" placeholder="Quelques mots sur vous…"></textarea>
+                            <label for="profileCity">Ville</label>
+                            <input id="profileCity" maxlength="100" autocomplete="address-level2" placeholder="Votre ville" />
+                            <label for="profileInterests">Centres d’intérêt</label>
+                            <textarea id="profileInterests" maxlength="500" rows="3" placeholder="Voyages, cinéma, cuisine…"></textarea>
+                            <button class="btn" type="submit">Enregistrer mon profil</button>
+                        </form>
+                        <p id="profileV44Status" role="status" aria-live="polite"></p>
+                    </section>
+                    <section class="card">
+                        <h3>Photo de profil</h3>
+                        <p class="sub">Image JPG, PNG ou WebP, 3 Mo maximum. Visible par les membres de votre groupe.</p>
+                        <label for="profilePhoto">Choisir une photo</label>
+                        <input id="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp" />
+                        <button class="btn secondary" id="profilePhotoSave" type="button">Mettre à jour ma photo</button>
+                        <p id="profilePhotoStatus" role="status" aria-live="polite"></p>
                     </section>
                     <section class="card">
                         <h3>Apparence de l’application</h3>
@@ -132,12 +159,10 @@
                     </section>
                     <section class="card">
                         <h3>Compte personnel</h3>
-                        <form id="personalProfileForm" class="form">
-                            <label for="personalFirstName">Mon prénom</label>
-                            <input id="personalFirstName" name="prenom" type="text" maxlength="60" autocomplete="given-name" required placeholder="Votre prénom" />
-                            <button class="btn" type="submit">Enregistrer mon prénom</button>
-                        </form>
-                        <p id="personalProfileMessage" role="status" aria-live="polite"></p>
+                        <p class="sub">Votre adresse e-mail de connexion reste privée. Le mot de passe n’est jamais affiché.</p>
+                        <p id="profileAccountEmail"></p>
+                        <button class="btn secondary" id="profilePasswordReset" type="button">Recevoir un lien pour changer mon mot de passe</button>
+                        <p id="profilePasswordStatus" role="status" aria-live="polite"></p>
                     </section>
                 </section>
 				<section id="profilePage" class="profile-page" hidden>
@@ -197,11 +222,12 @@
 		<div id="editorBody"></div>
 	</div>
 </div>
-<script defer src="./app.js?v=43">
+<script defer src="./app.js?v=44">
 		</script>
 		
-		<script src="./auth.js?v=32" type="module">
+		<script src="./auth.js?v=44" type="module">
 		</script>
+        <script src="./profil-v44.js?v=44" type="module"></script>
 	</body>
 </html>
 

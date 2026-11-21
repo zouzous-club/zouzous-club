@@ -54,3 +54,15 @@
 		padding: 10px 12px;
 	}
 }
+
+/* V44 : identité et photo, avec une mise en page adaptée aux écrans étroits. */
+.profile-heading { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.profile-heading h3 { margin: 0 0 5px; overflow-wrap: anywhere; }
+.profile-heading p { margin: 0; }
+.profile-avatar { width: 94px; height: 94px; object-fit: cover; border-radius: 50%; border: 3px solid #D65DB1; background: #fff; flex: none; }
+#profileV44Form textarea, #profileV44Form input { width: 100%; max-width: 100%; box-sizing: border-box; }
+#profileV44Form textarea { resize: vertical; min-height: 86px; }
+#profilePhoto { display: block; max-width: 100%; margin: 10px 0 16px; }
+#profileV44Status, #profilePhotoStatus, #profilePasswordStatus { overflow-wrap: anywhere; }
+#profileAccountEmail { overflow-wrap: anywhere; }
+@media (max-width: 480px) { .profile-avatar { width: 76px; height: 76px; } .profile-heading { gap: 12px; } }
