@@ -1803,9 +1803,9 @@ button.add-button img {
     filter: brightness(0.96);
 }
 
-/* Le mois en cours conserve ses fonds d'origine (V28). */
+/* Toutes les dates du mois en cours utilisent le fond des jours avec evenement (V30). */
 .agenda-page.month-fit .calendar .calendar-date {
-    background: #f6f4fc;
+    background: #ebd9f7;
     color: inherit;
 }
 
@@ -1854,7 +1854,7 @@ button.add-button img {
 }
 
 [data-theme="dark"] .agenda-page.month-fit .calendar .calendar-date {
-    background: #302b3b;
+    background: #4a355f;
     color: #f0eaf5;
 }
 
