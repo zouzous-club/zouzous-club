@@ -1874,3 +1874,28 @@ button.add-button img {
     color: #827f8a;
     opacity: 0.78;
 }
+
+/* V34 : icône disco indépendante des polices emoji installées. */
+.disco-icon {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.2em;
+    object-fit: contain;
+}
+.event-delete-area {
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line, #61516e);
+}
+.event-delete-confirm[hidden], .event-delete-start[hidden] {
+    display: none !important;
+}
+.event-delete-confirm p {
+    margin: 0 0 12px;
+}
+.event-delete-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}

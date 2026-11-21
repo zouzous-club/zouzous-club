@@ -1,10 +1,11 @@
 // Zouzous Club — Service Worker.
 // Les pages, sessions et données privées ne sont jamais mises en cache.
 
-const CACHE = 'zouzous-club-assets-v33';
+const CACHE = 'zouzous-club-assets-v34';
 
 const STATIC = [
     './icon.svg',
+    './disco.svg',
     './icon-180.png',
     './icon-192.png',
     './icon-512.png',

@@ -60,7 +60,9 @@ const eventTypes = {
     autre: { label: 'Autre', icon: '🤷' }
 };
 const eventOccursOn = (entry, iso) => entry.date <= iso && (entry.endDate || entry.date) >= iso;
-const eventIcon = event => eventTypes[event.category]?.icon || eventTypes.autre.icon;
+const eventIcon = event => event.category === 'fete'
+    ? '<img class="disco-icon" src="./disco.svg" alt="🪩" title="Boule disco">'
+    : (eventTypes[event.category]?.icon || eventTypes.autre.icon);
 const mapsLink = address => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 const eventCategories = () => `<label>Type d’événement
     <select name="category" required>
@@ -289,12 +291,56 @@ function minutes(value) {
     return hours * 60 + mins;
 }
 
-function eventBounds(entry) {
-    const start = minutes(entry.time);
-    if (start === null) return null;
-    const requestedEnd = minutes(entry.endTime);
-    const end = requestedEnd !== null && requestedEnd > start ? requestedEnd : start + 60;
-    return { start, end: Math.min(1440, end) };
+function eventBounds(entry, iso = entry.date) {
+    if (!eventOccursOn(entry, iso)) {
+        return null;
+    }
+
+    const firstDay = entry.date;
+    const lastDay = entry.endDate || firstDay;
+    const startMinute = minutes(entry.time);
+    const endMinute = minutes(entry.endTime);
+
+    // Un événement sans heure de début reste dans le bandeau « Journée ».
+    if (startMinute === null) {
+        return null;
+    }
+
+    const start = iso === firstDay ? startMinute : 0;
+    let end;
+
+    if (iso < lastDay) {
+        end = 1440;
+    }
+    else if (endMinute !== null) {
+        end = endMinute;
+    }
+    else if (lastDay !== firstDay) {
+        end = 1440;
+    }
+    else {
+        end = Math.min(1440, startMinute + 60);
+    }
+
+    // Ne jamais fabriquer un créneau négatif ou nul.
+    if (end <= start) {
+        return null;
+    }
+
+    return { start, end };
+}
+
+function eventTimeLabel(entry, iso) {
+    const bounds = eventBounds(entry, iso);
+    if (!bounds) {
+        return 'Toute la journée';
+    }
+
+    const format = value => value === 1440
+        ? '24:00'
+        : `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+
+    return `${format(bounds.start)} – ${format(bounds.end)}`;
 }
 
 function eventEditorButton(entry, label = 'Modifier') {
@@ -302,8 +348,7 @@ function eventEditorButton(entry, label = 'Modifier') {
 }
 
 function timelineEvent(entry) {
-    const bounds = eventBounds(entry);
-    const timeLabel = bounds ? `${entry.time} – ${String(Math.floor(bounds.end / 60)).padStart(2, '0')}:${String(bounds.end % 60).padStart(2, '0')}` : 'Toute la journée';
+    const timeLabel = eventTimeLabel(entry, entry.date);
     return `<article class="timeline-event">
         <div class="timeline-event-heading"><span aria-hidden="true">${eventIcon(entry)}</span><strong>${escapeHtml(entry.title)}</strong>${eventEditorButton(entry)}</div>
         <span class="timeline-event-time">${escapeHtml(timeLabel)}</span>
@@ -313,9 +358,9 @@ function timelineEvent(entry) {
 
 function timeGrid(iso) {
     const entries = state.events.filter(entry => eventOccursOn(entry, iso));
-    const timed = entries.filter(entry => eventBounds(entry) && entry.date === iso);
-    const allDay = entries.filter(entry => !eventBounds(entry) || entry.date !== iso);
-    const ordered = timed.map(entry => ({ entry, ...eventBounds(entry) }))
+    const timed = entries.filter(entry => eventBounds(entry, iso));
+    const allDay = entries.filter(entry => !eventBounds(entry, iso));
+    const ordered = timed.map(entry => ({ entry, ...eventBounds(entry, iso) }))
         .sort((a, b) => a.start - b.start || b.end - a.end);
     const clusters = [];
     let cluster = [];
@@ -353,7 +398,7 @@ function timeGrid(iso) {
         const width = 100 / event.columns;
         return `<article class="hour-event" style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)" data-event-card="${escapeHtml(event.entry.id)}">
             <strong>${eventIcon(event.entry)} ${escapeHtml(event.entry.title)}</strong>
-            <small>${escapeHtml(event.entry.time)}${event.entry.endTime ? '–' + escapeHtml(event.entry.endTime) : ''}</small>
+            <small>${escapeHtml(eventTimeLabel(event.entry, iso))}</small>
             ${event.entry.place ? `<a href="${mapsLink(event.entry.place)}" target="_blank" rel="noopener noreferrer" class="hour-place">📍 ${escapeHtml(event.entry.place)}</a>` : ''}
         </article>`;
     }).join('');
@@ -421,12 +466,12 @@ function listView() {
 function focusFirstEvent() {
     const scroll = document.querySelector('.timed-scroll');
     if (!scroll) return;
-    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate) && eventBounds(entry));
+    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate) && eventBounds(entry, selectedDate));
     if (!dayEvents.length) {
         scroll.scrollTop = 8 * 72;
         return;
     }
-    const firstMinute = Math.min(...dayEvents.map(entry => eventBounds(entry).start));
+    const firstMinute = Math.min(...dayEvents.map(entry => eventBounds(entry, selectedDate).start));
     scroll.scrollTop = Math.max(0, (firstMinute / 60 - 1) * 72);
 }
 
@@ -462,6 +507,23 @@ function openEditor(kind, editId = null) {
             const field = editorForm.elements.namedItem(key);
             if (field && typeof value === 'string') field.value = value;
         }
+    }
+    if (existing) {
+        const editorForm = $('editorBody').querySelector('form');
+        editorForm.insertAdjacentHTML('beforeend', `
+            <div class="event-delete-area">
+                <button type="button" class="btn danger event-delete-start" data-delete-event="${escapeHtml(existing.id)}">
+                    Supprimer l’événement
+                </button>
+                <div class="event-delete-confirm" hidden>
+                    <p>Supprimer définitivement cet événement pour tout le cercle ?</p>
+                    <div class="event-delete-actions">
+                        <button type="button" class="btn secondary" data-cancel-delete>Annuler</button>
+                        <button type="button" class="btn danger" data-confirm-delete="${escapeHtml(existing.id)}">Confirmer la suppression</button>
+                    </div>
+                </div>
+            </div>
+        `);
     }
     if (kind === 'events' && !existing) {
         const editorForm = $('editorBody').querySelector('form');
@@ -553,7 +615,7 @@ document.addEventListener('keydown', event => {
     }
 });
 
-document.addEventListener('click', event => {
+document.addEventListener('click', async event => {
     const eventCard = event.target.closest('[data-event-card]');
     if (eventCard && !event.target.closest('a')) {
         openEditor('events', eventCard.dataset.eventCard);
@@ -562,6 +624,40 @@ document.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button)
     return;
+    if (button.dataset.deleteEvent) {
+        const area = button.closest('.event-delete-area');
+        area.querySelector('.event-delete-confirm').hidden = false;
+        button.hidden = true;
+        return;
+    }
+    if (button.hasAttribute('data-cancel-delete')) {
+        const area = button.closest('.event-delete-area');
+        area.querySelector('.event-delete-confirm').hidden = true;
+        area.querySelector('.event-delete-start').hidden = false;
+        return;
+    }
+    if (button.dataset.confirmDelete) {
+        const id = button.dataset.confirmDelete;
+        button.disabled = true;
+        try {
+            await removeSharedEvent(id);
+            closeEditor();
+            render();
+        }
+        catch (error) {
+            button.disabled = false;
+            const area = button.closest('.event-delete-area');
+            let message = area.querySelector('.shared-form-error');
+            if (!message) {
+                message = document.createElement('p');
+                message.className = 'shared-form-error';
+                message.setAttribute('role', 'alert');
+                area.append(message);
+            }
+            message.textContent = 'Suppression impossible : ' + error.message;
+        }
+        return;
+    }
     if (button.id === 'privateSpaceButton') {
         page = 'compte';
         render();
