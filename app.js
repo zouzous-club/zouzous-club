@@ -17,6 +17,7 @@ catch (error) {
     state = structuredClone(initial);
 }
 let page = 'accueil';
+let displayedMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 const $ = id => document.getElementById(id);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const uid = () => crypto.randomUUID();
@@ -35,21 +36,62 @@ function home() {
     return `<div class="grid">${card('📅 Prochains événements', next.length ? next.map(event => item(event.title, dateLabel(event.date))).join('') : empty('Aucun événement à venir'))}${card('🗳️ Sondages ouverts', openPolls.length ? openPolls.map(poll => item(poll.title, `${poll.options.length} propositions`)).join('') : empty('Aucun sondage en cours'))}${card('📝 Pense-bêtes', state.notes.slice(-3).reverse().map(note => item(note.title, note.text)).join('') || empty('Aucune note'))}${card('✅ Tâches à faire', state.tasks.filter(task => !task.done).slice(0, 5).map(task => item(task.title, 'À réaliser')).join('') || empty('Tout est à jour !'))}</div>`;
 }
 function calendar() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const year = displayedMonth.getFullYear();
+    const month = displayedMonth.getMonth();
     const first = (new Date(year, month, 1).getDay() + 6) % 7;
     const count = new Date(year, month + 1, 0).getDate();
-    const heads = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(day => `<div class="day head">${day}</div>`).join('');
+    const monthLabel = displayedMonth.toLocaleDateString('fr-FR', {
+        month: 'long',
+        year: 'numeric'
+    });
+
+    const headings = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+        .map(day => `<div class="day head">${day}</div>`)
+        .join('');
     const blanks = Array.from({ length: first }, () => '<div class="day blank"></div>').join('');
     const days = Array.from({ length: count }, (_, index) => {
         const day = index + 1;
         const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const events = state.events.filter(event => event.date === iso);
-        return `<div class="day ${events.length ? 'has' : ''}" title="${escapeHtml(events.map(event => event.title).join(', '))}">${day}${events.length ? ' •' : ''}</div>`;
+        const events = state.events.filter(entry => entry.date === iso);
+        const eventCount = events.length;
+        const accessibleLabel = `${dateLabel(iso)} : ${eventCount} événement${eventCount > 1 ? 's' : ''}`;
+
+        return `<button type="button" class="day calendar-date ${eventCount ? 'has' : ''}"
+            data-calendar-date="${iso}" aria-label="${escapeHtml(accessibleLabel)}"
+            title="${escapeHtml(accessibleLabel)}">${day}${eventCount ? '<span class="event-dot" aria-hidden="true"></span>' : ''}</button>`;
     }).join('');
-    return card(`🗓️ ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, `<div class="calendar">${heads}${blanks}${days}</div>`, true);
+
+    return `<section class="card wide">
+        <div class="calendar-heading">
+            <h3>🗓️ ${escapeHtml(monthLabel)}</h3>
+            <div class="calendar-navigation">
+                <button type="button" data-month-change="-1" aria-label="Mois précédent">‹</button>
+                <button type="button" data-month-change="1" aria-label="Mois suivant">›</button>
+            </div>
+        </div>
+        <div class="calendar">${headings}${blanks}${days}</div>
+    </section>`;
 }
+
+function openDay(iso) {
+    const events = state.events
+        .filter(entry => entry.date === iso)
+        .sort((left, right) => (left.time || '').localeCompare(right.time || ''));
+
+    $('editorTitle').textContent = dateLabel(iso);
+    $('editorBody').innerHTML = `<div class="day-details">
+        ${events.length ? events.map(entry => `<article class="day-event">
+            <h3>${escapeHtml(entry.title)}</h3>
+            ${entry.time ? `<p><strong>Heure :</strong> ${escapeHtml(entry.time)}</p>` : ''}
+            ${entry.place ? `<p><strong>Lieu :</strong> ${escapeHtml(entry.place)}</p>` : ''}
+        </article>`).join('') : empty('Aucun événement prévu ce jour-là.')}
+        <button type="button" class="btn" data-add-on-date="${iso}">Ajouter un événement</button>
+    </div>`;
+    $('editorOverlay').hidden = false;
+    $('editorOverlay').scrollTop = 0;
+    document.body.classList.add('editor-open');
+}
+
 const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="25" height="25"></button>`;
 const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
 const editorDefinitions = {
@@ -138,6 +180,28 @@ document.addEventListener('click', event => {
         document.querySelector('.shell > main')?.scrollTo(0, 0);
         return;
     }
+    if (button.dataset.monthChange) {
+        displayedMonth = new Date(
+            displayedMonth.getFullYear(),
+            displayedMonth.getMonth() + Number(button.dataset.monthChange),
+            1
+        );
+        render();
+        return;
+    }
+    if (button.dataset.calendarDate) {
+        openDay(button.dataset.calendarDate);
+        return;
+    }
+    if (button.dataset.addOnDate) {
+        const selectedDate = button.dataset.addOnDate;
+        openEditor('events');
+        const dateInput = $('editorBody').querySelector('input[name="date"]');
+        if (dateInput) {
+            dateInput.value = selectedDate;
+        }
+        return;
+    }
     if (button.dataset.add) {
         openEditor(button.dataset.add);
         return;
@@ -210,6 +274,9 @@ document.addEventListener('submit', event => {
     }
     state[kind].push({ id: uid(), ...data, ...(kind === 'posts' ? { createdAt: new Date().toLocaleString('fr-FR') } : {}) });
     save();
+    if (kind === 'events' && data.date) {
+        displayedMonth = new Date(`${data.date}T12:00:00`);
+    }
     closeEditor();
     render();
 });
