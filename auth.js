@@ -7,6 +7,15 @@ const mobile = $('mobileNav');
 const params = new URLSearchParams(location.search);
 const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
 const invitationGroup = params.get('groupe');
+const invitationKey = 'zouzous-invitation-groupe';
+
+if (validInvitationGroup(invitationGroup)) {
+    sessionStorage.setItem(invitationKey, invitationGroup);
+}
+
+function validInvitationGroup(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || '');
+}
 const callbackType = hashParams.get('type') || params.get('type');
 const validUuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || '');
 const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('VOTRE-PROJET') && !SUPABASE_ANON_KEY.includes('VOTRE_CLE');
@@ -16,6 +25,35 @@ let groupId;
 let role;
 let processing = false;
 let passwordFlow = callbackType === 'invite' || callbackType === 'recovery';
+
+function pendingInvitationGroup(user) {
+    const candidates = [
+        invitationGroup,
+        sessionStorage.getItem(invitationKey),
+        user?.user_metadata?.groupe_id
+    ];
+
+    return candidates.find(validUuid) || null;
+}
+
+async function activateInvitation(user) {
+    const pendingGroup = pendingInvitationGroup(user);
+
+    if (!pendingGroup) {
+        return { attempted: false, activated: false };
+    }
+
+    const { error } = await supabase.rpc('activer_mon_invitation', {
+        p_groupe_id: pendingGroup
+    });
+
+    if (error) {
+        return { attempted: true, activated: false, error };
+    }
+
+    sessionStorage.removeItem(invitationKey);
+    return { attempted: true, activated: true };
+}
 function message(text, isError = false) {
     $('authMessage').textContent = text;
     $('authMessage').style.color = isError ? '#a72e43' : '#4b359e';
@@ -67,13 +105,33 @@ async function loadMembership() {
     if (error)
     throw error;
     if (!data?.length) {
+        const activation = await activateInvitation(currentUser);
+
+        if (activation.activated) {
+            const { data: activatedMembership, error: reloadError } = await supabase
+                .from('membres_groupes')
+                .select('groupe_id,role,statut,groupes(nom)')
+                .eq('statut', 'actif')
+                .limit(20);
+
+            if (!reloadError && activatedMembership?.length) {
+                await applyMembership(activatedMembership[0]);
+                return;
+            }
+        }
+
         groupId = null;
         setAccess(false);
         show('authPending');
-        message('Votre compte ne dispose pas encore d’un accès actif.');
+        message(activation.error
+            ? 'Invitation non activée : ' + (activation.error.message || 'contactez un administrateur.')
+            : 'Votre compte ne dispose pas encore d’un accès actif.');
         return;
     }
-    const membership = data[0];
+    await applyMembership(data[0]);
+}
+
+async function applyMembership(membership) {
     groupId = membership.groupe_id;
     role = membership.role;
     $('memberStatus').textContent = `${membership.groupes?.nom || 'Zouzous Club'} · ${currentUser.email}`;
@@ -142,14 +200,18 @@ $('passwordForm').addEventListener('submit', async (event) => {
         const { error } = await supabase.auth.updateUser({ password });
         if (error)
         throw error;
+        passwordFlow = false;
         if (callbackType === 'invite') {
-            if (!validUuid(invitationGroup))
-            throw new Error('Groupe manquant dans le lien d’invitation.');
-            const { error: activationError } = await supabase.rpc('activer_mon_invitation', {
-                p_groupe_id: invitationGroup,
-            });
-            if (activationError)
-            throw activationError;
+            const { data: { user } } = await supabase.auth.getUser();
+            const activation = await activateInvitation(user);
+
+            if (!activation.attempted) {
+                throw new Error('Groupe manquant dans le lien d’invitation.');
+            }
+
+            if (!activation.activated) {
+                throw activation.error || new Error('Invitation non activée.');
+            }
         }
         passwordFlow = false;
         history.replaceState(null, '', location.pathname);
@@ -185,7 +247,11 @@ $('inviteForm').addEventListener('submit', async (event) => {
     const email = String(new FormData(event.currentTarget).get('email')).trim();
     try {
         const { data, error } = await supabase.functions.invoke('inviter-membre', {
-            body: { groupe_id: groupId, email },
+            body: {
+                groupe_id: groupId,
+                email,
+                role: String(new FormData(event.currentTarget).get('role') || 'membre')
+            },
         });
         if (error || !data?.ok)
         throw error || new Error(data?.erreur || 'INVITATION_REFUSEE');
