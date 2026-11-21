@@ -20,6 +20,37 @@ let page = 'accueil';
 let displayedMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let agendaView = 'mois';
 let selectedDate = new Date().toLocaleDateString('en-CA');
+const themeKey = 'zouzous-club-theme';
+const themeChoices = ['auto', 'clair', 'sombre'];
+let themePreference = localStorage.getItem(themeKey) || 'auto';
+
+function applyTheme() {
+    const dark = themePreference === 'sombre' || (
+        themePreference === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    );
+
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+
+    const control = document.getElementById('themeToggle');
+
+    if (control) {
+        const labels = { auto: 'Automatique', clair: 'Clair', sombre: 'Sombre' };
+        control.textContent = dark ? '☀' : '☾';
+        control.title = `Apparence : ${labels[themePreference]}. Appuyer pour changer.`;
+        control.setAttribute('aria-label', control.title);
+    }
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+    const next = (themeChoices.indexOf(themePreference) + 1) % themeChoices.length;
+    themePreference = themeChoices[next];
+    localStorage.setItem(themeKey, themePreference);
+    applyTheme();
+});
+applyTheme();
+
 const $ = id => document.getElementById(id);
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const uid = () => crypto.randomUUID();
@@ -196,12 +227,40 @@ function dayView(twoDays = false) {
 
 function listView() {
     const events = [...state.events].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
-    return `<section class="card wide"><div class="calendar-heading"><h3>Événements à venir</h3></div>
-        ${events.length ? events.map(entry => `<div class="agenda-list-item">
-            <div><strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong><small>${dateLabel(entry.date)}${entry.time ? ' · ' + entry.time : ''}${entry.endTime ? '–' + entry.endTime : ''}</small>
-            ${entry.place ? `<a href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)}</a>` : ''}</div>
-            ${eventEditorButton(entry)}
-        </div>`).join('') : empty('Aucun événement')}</section>`;
+    const grouped = new Map();
+
+    for (const entry of events) {
+        if (!grouped.has(entry.date)) {
+            grouped.set(entry.date, []);
+        }
+
+        grouped.get(entry.date).push(entry);
+    }
+
+    const days = [...grouped.entries()].map(([date, entries]) => {
+        const heading = new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const items = entries.map(entry => `<article class="agenda-list-event" data-event-card="${escapeHtml(entry.id)}" tabindex="0" role="button" aria-label="Modifier ${escapeHtml(entry.title)}">
+            <span class="agenda-list-accent" aria-hidden="true"></span>
+            <div class="agenda-list-details">
+                <strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong>
+                ${entry.place ? `<a href="${mapsLink(entry.place)}" target="_blank" rel="noopener noreferrer">📍 ${escapeHtml(entry.place)}</a>` : ''}
+            </div>
+            <div class="agenda-list-hours">${entry.time ? `<span>${escapeHtml(entry.time)}</span><small>${escapeHtml(entry.endTime || '')}</small>` : '<span>Journée</span>'}</div>
+        </article>`).join('');
+
+        return `<section class="agenda-list-day"><h3>${escapeHtml(heading)}</h3>${items}</section>`;
+    }).join('');
+
+    return `<section class="card wide agenda-list-card">
+        <div class="calendar-heading"><h3>Liste des événements</h3></div>
+        ${days || empty('Aucun événement enregistré')}
+    </section>`;
 }
 
 function openDay(iso) {
@@ -250,12 +309,11 @@ function closeEditor() {
 function agenda() {
     const views = [
         ['mois', 'Mois'],
-        ['deux', '2 jours'],
         ['jour', '1 jour'],
         ['liste', 'Liste']
     ];
     const selector = `<div class="agenda-view-selector" role="group" aria-label="Affichage de l’agenda">${views.map(([id, label]) => `<button type="button" data-agenda-view="${id}" class="${agendaView === id ? 'selected' : ''}" aria-pressed="${agendaView === id}">${label}</button>`).join('')}</div>`;
-    const content = agendaView === 'mois' ? monthScroll() : agendaView === 'deux' ? dayView(true) : agendaView === 'jour' ? dayView() : listView();
+    const content = agendaView === 'mois' ? monthScroll() : agendaView === 'jour' ? dayView() : listView();
     return `<div class="grid agenda-page">${selector}${content}${section('Tous les événements', 'events', [...state.events].sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || '')).map(entry => `<div class="item row"><div><strong>${eventIcon(entry)} ${escapeHtml(entry.title)}</strong><small>${dateLabel(entry.date)}${entry.time ? ' à ' + entry.time : ''}${entry.endTime ? '–' + entry.endTime : ''}${entry.place ? ' · ' + escapeHtml(entry.place) : ''}</small></div><div class="event-actions">${eventEditorButton(entry)}${removeButton('events', entry.id)}</div></div>`).join('') || empty('Créez votre premier événement'))}</div>`;
 }
 
@@ -317,6 +375,19 @@ function render() {
         notice.hidden = isProfile;
     }
 }
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+    }
+
+    const card = event.target.closest('.agenda-list-event[data-event-card]');
+
+    if (card && event.target === card) {
+        event.preventDefault();
+        openEditor('events', card.dataset.eventCard);
+    }
+});
+
 document.addEventListener('click', event => {
     const eventCard = event.target.closest('[data-event-card]');
     if (eventCard && !event.target.closest('a')) {
