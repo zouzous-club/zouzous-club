@@ -50,7 +50,7 @@ function calendar() {
     }).join('');
     return card(`🗓️ ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, `<div class="calendar">${heads}${blanks}${days}</div>`, true);
 }
-const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><span aria-hidden="true">+</span></button>`;
+const addButton = (kind, title) => `<button type="button" class="add-button" data-add="${kind}" aria-label="Ajouter : ${escapeHtml(title)}" title="Ajouter"><img src="./plus.png" alt="" aria-hidden="true" width="25" height="25"></button>`;
 const section = (title, kind, body) => `<section class="card"><div class="section-heading"><h3>${title}</h3>${addButton(kind, title)}</div>${body}</section>`;
 const editorDefinitions = {
     events: { title: 'Nouvel événement', fields: input('Titre', 'title') + input('Date', 'date', 'date') + input('Heure', 'time', 'time', false) + input('Lieu', 'place', 'text', false) },
@@ -68,6 +68,7 @@ function openEditor(kind) {
     $('editorTitle').textContent = definition.title;
     $('editorBody').innerHTML = form(kind, definition.fields, kind === 'posts' ? 'Publier' : 'Ajouter');
     $('editorOverlay').hidden = false;
+    $('editorOverlay').scrollTop = 0;
     document.body.classList.add('editor-open');
     // Ne pas ouvrir le clavier avant que l'utilisateur touche un champ.
 }
@@ -134,7 +135,7 @@ document.addEventListener('click', event => {
     if (button.dataset.page) {
         page = button.dataset.page;
         render();
-        window.scrollTo(0, 0);
+        document.querySelector('.shell > main')?.scrollTo(0, 0);
         return;
     }
     if (button.dataset.add) {
