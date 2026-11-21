@@ -64,6 +64,9 @@ function show(id) {
     }
 }
 function setAccess(allowed) {
+    if (!allowed) {
+        window.dispatchEvent(new CustomEvent('zouzous:membership', { detail: null }));
+    }
     shell.hidden = !allowed;
     mobile.hidden = !allowed;
     authScreen.hidden = allowed;
@@ -206,6 +209,9 @@ async function applyMembership(membership) {
     $('invitePanel').hidden = role !== 'administrateur';
     $('memberPanel').hidden = false;
     setAccess(true);
+    window.dispatchEvent(new CustomEvent('zouzous:membership', {
+        detail: { client: supabase, groupId }
+    }));
     await loadMembers();
     await loadPersonalProfile();
 }

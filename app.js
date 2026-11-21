@@ -66,6 +66,146 @@ const eventCategories = () => `<label>Type d’événement
 </label>`;
 
 const save = () => localStorage.setItem(storageKey, JSON.stringify(state));
+// Agenda partagé : les données sont chargées depuis Supabase uniquement
+// après confirmation d'une adhésion active au cercle.
+let sharedAgenda = null;
+let sharedAgendaLoading = false;
+let sharedAgendaError = '';
+
+function eventFromDatabase(row) {
+    return {
+        id: row.id,
+        title: row.titre,
+        category: row.categorie,
+        date: row.date_evenement,
+        time: row.heure_debut || '',
+        endTime: row.heure_fin || '',
+        place: row.lieu || ''
+    };
+}
+
+async function loadSharedEvents() {
+    if (!sharedAgenda || sharedAgendaLoading) {
+        return;
+    }
+
+    const connection = sharedAgenda;
+    sharedAgendaLoading = true;
+
+    try {
+        const { data, error } = await connection.client
+            .from('evenements_zouzous')
+            .select('id,titre,categorie,date_evenement,heure_debut,heure_fin,lieu')
+            .eq('groupe_id', connection.groupId)
+            .order('date_evenement', { ascending: true });
+
+        if (error) {
+            throw error;
+        }
+
+        if (sharedAgenda !== connection) {
+            return;
+        }
+
+        state.events = (data || []).map(eventFromDatabase);
+        sharedAgendaError = '';
+        render();
+    }
+    catch (error) {
+        console.error('Agenda partagé : chargement impossible.', error);
+        showAgendaError('Chargement de l’agenda partagé impossible : ' + error.message);
+    }
+    finally {
+        sharedAgendaLoading = false;
+    }
+}
+
+function showAgendaError(message) {
+    sharedAgendaError = message;
+    const status = document.getElementById('sharedAgendaMessage');
+    if (status) {
+        status.textContent = message;
+        status.hidden = false;
+    }
+}
+
+window.addEventListener('focus', () => {
+    void loadSharedEvents();
+});
+
+window.addEventListener('zouzous:membership', event => {
+    const { client, groupId } = event.detail || {};
+
+    if (!client || !groupId) {
+        sharedAgenda = null;
+        state.events = [];
+        render();
+        return;
+    }
+
+    sharedAgenda = { client, groupId };
+    sharedAgendaError = '';
+    state.events = [];
+    render();
+    void loadSharedEvents();
+});
+
+async function writeSharedEvent(data, editId) {
+    if (!sharedAgenda) {
+        throw new Error('Connectez-vous à votre cercle pour enregistrer un événement.');
+    }
+
+    const payload = {
+        titre: data.title.trim(),
+        categorie: data.category,
+        date_evenement: data.date,
+        heure_debut: data.time || null,
+        heure_fin: data.endTime || null,
+        lieu: data.place?.trim() || null
+    };
+
+    let query;
+
+    if (editId) {
+        query = sharedAgenda.client
+            .from('evenements_zouzous')
+            .update(payload)
+            .eq('id', editId)
+            .eq('groupe_id', sharedAgenda.groupId);
+    }
+    else {
+        query = sharedAgenda.client
+            .from('evenements_zouzous')
+            .insert({ ...payload, groupe_id: sharedAgenda.groupId });
+    }
+
+    const { error } = await query;
+
+    if (error) {
+        throw error;
+    }
+
+    await loadSharedEvents();
+}
+
+async function removeSharedEvent(id) {
+    if (!sharedAgenda) {
+        throw new Error('Agenda partagé non connecté.');
+    }
+
+    const { error } = await sharedAgenda.client
+        .from('evenements_zouzous')
+        .delete()
+        .eq('id', id)
+        .eq('groupe_id', sharedAgenda.groupId);
+
+    if (error) {
+        throw error;
+    }
+
+    await loadSharedEvents();
+}
+
 const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 const item = (title, detail, actions = '') => `<div class="item row"><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></div>${actions}</div>`;
 const empty = label => `<div class="empty">${escapeHtml(label)}</div>`;
@@ -332,7 +472,7 @@ function agenda() {
     ];
     const selector = `<div class="agenda-view-selector" role="group" aria-label="Affichage de l’agenda">${views.map(([id, label]) => `<button type="button" data-agenda-view="${id}" class="${agendaView === id ? 'selected' : ''}" aria-pressed="${agendaView === id}">${label}</button>`).join('')}</div>`;
     const content = agendaView === 'mois' ? monthScroll() : agendaView === 'jour' ? dayView() : listView();
-    return `<div class="grid agenda-page agenda-fit ${agendaView === 'mois' ? 'month-fit' : agendaView === 'jour' ? 'day-fit' : 'list-fit'}">${selector}${content}</div>`;
+    return `<div class="grid agenda-page agenda-fit ${agendaView === 'mois' ? 'month-fit' : agendaView === 'jour' ? 'day-fit' : 'list-fit'}">${selector}<p id="sharedAgendaMessage" role="alert" ${sharedAgendaError ? '' : 'hidden'}>${escapeHtml(sharedAgendaError)}</p>${content}</div>`;
 }
 
 function monthScroll() {
@@ -468,6 +608,12 @@ document.addEventListener('click', event => {
     }
     if (button.dataset.remove) {
         const { remove, id } = button.dataset;
+        if (remove === 'events') {
+            void removeSharedEvent(id).catch(error => {
+                showAgendaError('Suppression impossible : ' + error.message);
+            });
+            return;
+        }
         state[remove] = state[remove].filter(entry => entry.id !== id);
         save();
         render();
@@ -504,7 +650,7 @@ document.addEventListener('change', event => {
 });
 document.addEventListener('input', event => { if (event.target.setCustomValidity)
     event.target.setCustomValidity(''); });
-document.addEventListener('submit', event => {
+document.addEventListener('submit', async event => {
     const formElement = event.target.closest('form[data-form]');
     if (!formElement)
     return;
@@ -539,6 +685,32 @@ document.addEventListener('submit', event => {
         return;
     }
     const editId = formElement.dataset.editId;
+    if (kind === 'events') {
+        const submitButton = formElement.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        try {
+            await writeSharedEvent(data, editId);
+            displayedMonth = new Date(`${data.date}T12:00:00`);
+            selectedDate = data.date;
+            closeEditor();
+            render();
+        }
+        catch (error) {
+            let status = formElement.querySelector('.shared-form-error');
+            if (!status) {
+                status = document.createElement('p');
+                status.className = 'shared-form-error';
+                status.setAttribute('role', 'alert');
+                formElement.append(status);
+            }
+            status.textContent = 'Enregistrement impossible : ' + error.message;
+        }
+        finally {
+            submitButton.disabled = false;
+        }
+        return;
+    }
     if (kind === 'events' && editId) {
         const existing = state.events.find(entry => entry.id === editId);
         if (existing) Object.assign(existing, data);
