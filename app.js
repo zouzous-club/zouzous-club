@@ -19,7 +19,7 @@ catch (error) {
 let page = 'accueil';
 let displayedMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let agendaView = 'mois';
-let selectedDate = new Date().toLocaleDateString('en-CA');
+let selectedDate = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
 const themeKey = 'zouzous-club-theme';
 const themeChoices = ['auto', 'clair', 'sombre'];
 let themePreference = localStorage.getItem(themeKey) || 'auto';
@@ -237,7 +237,19 @@ async function loadSharedEvents() {
         sharedAgendaInitialized = true;
         state.events = fresh;
         sharedAgendaError = '';
+        const previousScroll = page === 'agenda' && agendaView === 'jour'
+            ? document.querySelector('.timed-scroll')?.scrollTop
+            : null;
+        const previousListScroll = page === 'agenda' && agendaView === 'liste'
+            ? document.querySelector('.agenda-list-scroll')?.scrollTop
+            : null;
         render();
+        if (previousScroll !== null && previousScroll !== undefined) {
+            document.querySelector('.timed-scroll')?.scrollTo(0, previousScroll);
+        }
+        if (previousListScroll !== null && previousListScroll !== undefined) {
+            document.querySelector('.agenda-list-scroll')?.scrollTo(0, previousListScroll);
+        }
     }
     catch (error) {
         console.error('Agenda partagé : chargement impossible.', error);
@@ -370,7 +382,7 @@ function home() {
                 ? `${dateLabel(firstVisibleDay)} → ${dateLabel(event.endDate)}`
                 : dateLabel(firstVisibleDay);
             const hour = event.time && event.date >= today ? ` · ${escapeHtml(event.time.slice(0, 5))}` : '';
-            return `<button type="button" class="home-event" data-open-event="${escapeHtml(event.id)}">
+            return `<button type="button" class="home-event" data-open-event="${escapeHtml(event.id)}" aria-label="Voir ${escapeHtml(event.title)} dans l’agenda, vue 1 jour">
                 <span class="home-event-icon" aria-hidden="true">${eventIcon(event)}</span>
                 <span class="home-event-info"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(dateText)}${hour}</small></span>
                 <span class="home-event-chevron" aria-hidden="true">›</span>
@@ -448,6 +460,8 @@ function minutes(value) {
     return hours * 60 + mins;
 }
 
+// Les bornes horaires sont calculées pour chaque journée, y compris lorsque
+// un événement traverse minuit, plusieurs jours ou plusieurs mois.
 function eventBounds(entry, iso = entry.date) {
     if (!eventOccursOn(entry, iso)) {
         return null;
@@ -458,33 +472,28 @@ function eventBounds(entry, iso = entry.date) {
     const startMinute = minutes(entry.time);
     const endMinute = minutes(entry.endTime);
 
-    // Un événement sans heure de début reste dans le bandeau « Journée ».
+    // Un événement sans heure de début est une journée entière.
     if (startMinute === null) {
-        return null;
+        return { start: 0, end: 1440, isAllDay: true };
     }
 
     const start = iso === firstDay ? startMinute : 0;
-    let end;
+    let end = 1440;
 
-    if (iso < lastDay) {
-        end = 1440;
-    }
-    else if (endMinute !== null) {
+    if (iso === lastDay && endMinute !== null) {
         end = endMinute;
     }
-    else if (lastDay !== firstDay) {
-        end = 1440;
-    }
-    else {
-        end = Math.min(1440, startMinute + 60);
+    else if (firstDay === lastDay && endMinute === null) {
+        end = Math.min(1440, start + 60);
     }
 
-    // Ne jamais fabriquer un créneau négatif ou nul.
+    // Un événement finissant à 00 h ne doit pas créer un bloc fictif
+    // de 24 heures sur sa dernière journée.
     if (end <= start) {
         return null;
     }
 
-    return { start, end };
+    return { start, end, isAllDay: false };
 }
 
 function eventTimeLabel(entry, iso) {
@@ -492,12 +501,23 @@ function eventTimeLabel(entry, iso) {
     const last = entry.endDate || first;
     const start = minutes(entry.time);
     const finish = minutes(entry.endTime);
-    if (start === null) return 'Toute la journée';
-    if (first === last) {
-        return finish === null ? entry.time.slice(0, 5) : `${entry.time.slice(0, 5)} – ${entry.endTime.slice(0, 5)}`;
+
+    if (start === null) {
+        return 'Toute la journée';
     }
-    if (iso === first) return `Début : ${entry.time.slice(0, 5)}`;
-    if (iso === last) return finish === null ? 'Toute la journée' : `Fin : ${entry.endTime.slice(0, 5)}`;
+    if (first === last) {
+        return finish === null
+            ? `Début : ${entry.time.slice(0, 5)}`
+            : `${entry.time.slice(0, 5)} – ${entry.endTime.slice(0, 5)}`;
+    }
+    if (iso === first) {
+        return `Début : ${entry.time.slice(0, 5)}`;
+    }
+    if (iso === last) {
+        return finish === null
+            ? 'Toute la journée'
+            : `Fin : ${entry.endTime.slice(0, 5)}`;
+    }
     return 'Toute la journée';
 }
 
@@ -516,17 +536,17 @@ function timelineEvent(entry) {
 
 function timeGrid(iso) {
     const entries = state.events.filter(entry => eventOccursOn(entry, iso));
-    const timed = entries.filter(entry => eventBounds(entry, iso));
-    const allDay = entries.filter(entry => !eventBounds(entry, iso));
-    // Les événements sans heure occupent toute la grille de 00:00 à 24:00.
-    const ordered = [
-        ...allDay.map(entry => ({ entry, start: 0, end: 1440, isAllDay: true })),
-        ...timed.map(entry => ({ entry, ...eventBounds(entry, iso), isAllDay: false }))
-    ]
+    const ordered = entries
+        .map(entry => ({ entry, bounds: eventBounds(entry, iso) }))
+        .filter(item => item.bounds !== null)
+        .map(item => ({ entry: item.entry, ...item.bounds }))
         .sort((a, b) => a.start - b.start || b.end - a.end);
+
+    // Répartition en colonnes des événements qui se chevauchent.
     const clusters = [];
     let cluster = [];
     let clusterEnd = -1;
+
     for (const event of ordered) {
         if (cluster.length && event.start >= clusterEnd) {
             clusters.push(cluster);
@@ -536,37 +556,66 @@ function timeGrid(iso) {
         cluster.push(event);
         clusterEnd = Math.max(clusterEnd, event.end);
     }
-    if (cluster.length) clusters.push(cluster);
+    if (cluster.length) {
+        clusters.push(cluster);
+    }
+
     for (const group of clusters) {
         const active = [];
         let maxColumns = 0;
+
         for (const event of group) {
-            for (let i = 0; i < active.length; i++) {
-                if (active[i] <= event.start) active[i] = -1;
+            for (let index = 0; index < active.length; index++) {
+                if (active[index] <= event.start) {
+                    active[index] = -1;
+                }
             }
             let column = active.findIndex(end => end < 0);
-            if (column === -1) column = active.length;
+            if (column === -1) {
+                column = active.length;
+            }
             active[column] = event.end;
             event.column = column;
             maxColumns = Math.max(maxColumns, column + 1);
         }
-        group.forEach(event => { event.columns = maxColumns; });
+        group.forEach(event => {
+            event.columns = maxColumns;
+        });
     }
-    const hours = Array.from({ length: 24 }, (_, hour) => `<div class="hour-line" style="top:${hour * 72}px"><span>${String(hour).padStart(2, '0')}:00</span></div>`).join('');
+
+    const hours = Array.from({ length: 24 }, (_, hour) => `
+        <div class="hour-line" style="top:${hour * 72}px">
+            <span>${String(hour).padStart(2, '0')}:00</span>
+        </div>
+    `).join('');
+
     const blocks = ordered.map(event => {
         const top = event.start * 72 / 60;
         const height = Math.max(24, (event.end - event.start) * 72 / 60 - 3);
         const left = event.column * 100 / event.columns;
         const width = 100 / event.columns;
-        return `<article class="hour-event${event.isAllDay ? ' hour-event-all-day' : ''}" style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)" data-event-card="${escapeHtml(event.entry.id)}">
+        const label = eventTimeLabel(event.entry, iso);
+
+        return `<article
+            class="hour-event${event.isAllDay ? ' hour-event-all-day' : ''}"
+            style="top:${top}px;height:${height}px;left:calc(${left}% + 3px);width:calc(${width}% - 6px)"
+            data-event-card="${escapeHtml(event.entry.id)}"
+            tabindex="0"
+            role="button"
+            aria-label="Modifier ${escapeHtml(event.entry.title)}, ${escapeHtml(label)}"
+        >
             <strong>${eventIcon(event.entry)} ${escapeHtml(event.entry.title)}</strong>
-            <small>${escapeHtml(event.isAllDay ? 'Toute la journée' : eventTimeLabel(event.entry, iso))}</small>
+            <small>${escapeHtml(label)}</small>
             ${event.entry.place ? `<a href="${mapsLink(event.entry.place)}" target="_blank" rel="noopener noreferrer" class="hour-place">📍 ${escapeHtml(event.entry.place)}</a>` : ''}
         </article>`;
     }).join('');
+
     return `<div class="day-column" data-day="${iso}">
         <div class="day-column-title">${new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
-        <div class="hour-grid"><div class="hour-grid-lines">${hours}</div><div class="hour-grid-events">${blocks}</div></div>
+        <div class="hour-grid">
+            <div class="hour-grid-lines">${hours}</div>
+            <div class="hour-grid-events">${blocks}</div>
+        </div>
     </div>`;
 }
 
@@ -588,15 +637,25 @@ function listView() {
         let day = entry.date;
         const end = entry.endDate || entry.date;
         while (day <= end) {
-            if (!grouped.has(day)) {
-                grouped.set(day, []);
+            if (eventBounds(entry, day) !== null) {
+                if (!grouped.has(day)) {
+                    grouped.set(day, []);
+                }
+                grouped.get(day).push(entry);
             }
-            grouped.get(day).push(entry);
             day = addDays(day, 1);
         }
     }
 
-    const days = [...grouped.entries()].map(([date, entries]) => {
+    const days = [...grouped.entries()]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([date, entries]) => {
+        entries.sort((a, b) => {
+            const left = eventBounds(a, date);
+            const right = eventBounds(b, date);
+            return (left?.start ?? 0) - (right?.start ?? 0)
+                || a.title.localeCompare(b.title, 'fr');
+        });
         const heading = new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR', {
             weekday: 'long',
             day: 'numeric',
@@ -626,18 +685,39 @@ function listView() {
 
 function focusFirstEvent() {
     const scroll = document.querySelector('.timed-scroll');
-    if (!scroll) return;
-    const dayEvents = state.events.filter(entry => eventOccursOn(entry, selectedDate));
-    if (dayEvents.some(entry => !eventBounds(entry, selectedDate))) {
+    if (!scroll) {
+        return;
+    }
+
+    const visible = state.events
+        .filter(entry => eventOccursOn(entry, selectedDate))
+        .map(entry => eventBounds(entry, selectedDate))
+        .filter(bounds => bounds !== null);
+
+    // Un événement couvrant toute la journée commence à minuit.
+    if (visible.some(bounds => bounds.isAllDay || bounds.start === 0)) {
         scroll.scrollTop = 0;
         return;
     }
-    if (!dayEvents.length) {
+
+    // Position initiale 8 h en l'absence d'événement.
+    if (!visible.length) {
         scroll.scrollTop = 8 * 72;
         return;
     }
-    const firstMinute = Math.min(...dayEvents.map(entry => eventBounds(entry, selectedDate).start));
-    scroll.scrollTop = Math.max(0, (firstMinute / 60 - 1) * 72);
+
+    const firstMinute = Math.min(...visible.map(bounds => bounds.start));
+    scroll.scrollTop = Math.max(0, firstMinute * 72 / 60 - 72);
+}
+
+function agendaDateForEvent(entry) {
+    const today = dateISO(new Date());
+    // Événement en cours : ouverture sur aujourd'hui.
+    if (entry.date <= today && eventOccursOn(entry, today)) {
+        return today;
+    }
+    // Événement futur ou terminé : ouverture sur son premier jour.
+    return entry.date;
 }
 
 function openDay(iso) {
@@ -773,7 +853,7 @@ document.addEventListener('keydown', event => {
         return;
     }
 
-    const card = event.target.closest('.agenda-list-event[data-event-card]');
+    const card = event.target.closest('.agenda-list-event[data-event-card], .hour-event[data-event-card]');
 
     if (card && event.target === card) {
         event.preventDefault();
@@ -786,17 +866,14 @@ document.addEventListener('click', async event => {
     if (homeEvent) {
         const selected = state.events.find(entry => entry.id === homeEvent.dataset.openEvent);
         if (selected) {
-            const today = dateISO(new Date());
-            const targetDate = selected.date < today && eventOccursOn(selected, today)
-                ? today
-                : selected.date;
+            const targetDate = agendaDateForEvent(selected);
             displayedMonth = new Date(`${targetDate}T12:00:00`);
             openDay(targetDate);
         }
         return;
     }
     const eventCard = event.target.closest('[data-event-card]');
-    if (eventCard && !event.target.closest('a')) {
+    if (eventCard && !event.target.closest('a') && !event.target.closest('button')) {
         openEditor('events', eventCard.dataset.eventCard);
         return;
     }

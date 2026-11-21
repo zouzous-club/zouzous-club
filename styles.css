@@ -2055,3 +2055,87 @@ button.add-button img {
 [data-theme="light"] .hour-event.hour-event-all-day .hour-place {
     color: #5a426e;
 }
+
+/* V40 — Agenda : ajustements lisibilité et ergonomie, sans toucher
+   aux couleurs validées de la V31 ni au thème sombre. */
+.agenda-page .calendar,
+.agenda-page .month-scroll,
+.agenda-page .agenda-timed-card,
+.agenda-page .agenda-list-card {
+    min-width: 0;
+}
+
+.agenda-page .calendar-heading {
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.agenda-page .calendar-heading h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.agenda-page .hour-grid-events {
+    pointer-events: none;
+}
+
+.agenda-page .hour-event {
+    pointer-events: auto;
+    box-sizing: border-box;
+    min-width: 0;
+    touch-action: manipulation;
+}
+
+.agenda-page .hour-event:focus-visible,
+.agenda-page .agenda-list-event:focus-visible,
+.home-event:focus-visible {
+    outline: 3px solid #d65db1;
+    outline-offset: -2px;
+}
+
+.agenda-page .hour-event-all-day {
+    border-left-width: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.agenda-page .agenda-list-event {
+    min-width: 0;
+    cursor: pointer;
+}
+
+.agenda-page .agenda-list-details,
+.agenda-page .agenda-list-hours {
+    min-width: 0;
+}
+
+.agenda-page .agenda-list-hours {
+    text-align: right;
+}
+
+@media (max-width: 600px) {
+    .agenda-page .calendar-heading {
+        gap: 6px;
+    }
+
+    .agenda-page .hour-event {
+        padding: 5px 4px;
+        font-size: 11px;
+    }
+
+    .agenda-page .hour-event small,
+    .agenda-page .hour-place {
+        font-size: 10px;
+    }
+
+    .agenda-page .agenda-list-event {
+        gap: 8px;
+    }
+
+    .agenda-page .agenda-list-hours {
+        max-width: 44%;
+        overflow-wrap: anywhere;
+    }
+}
