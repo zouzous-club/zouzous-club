@@ -809,3 +809,114 @@ button.add-button {
         height: 32px;
     }
 }
+
+
+/* Version 18 : commandes compactes, pictogrammes et agenda horaire. */
+.add-button,
+button.add-button {
+    width: 27px !important;
+    height: 27px !important;
+    min-width: 27px !important;
+    min-height: 27px !important;
+    flex: 0 0 27px !important;
+    border-radius: 8px !important;
+}
+.add-button img,
+button.add-button img {
+    width: 15px !important;
+    height: 15px !important;
+}
+.calendar-navigation button {
+    display: grid;
+    place-items: center;
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    text-align: center;
+    padding: 0 0 3px;
+}
+.calendar-date {
+    flex-direction: column;
+    gap: 1px;
+    padding: 3px 1px;
+    min-width: 0;
+}
+.day-number {
+    display: block;
+}
+.day-event-icons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1px;
+    max-width: 100%;
+    font-size: clamp(9px, 2.8vw, 14px);
+    line-height: 1.15;
+    white-space: nowrap;
+}
+.day-details {
+    gap: 10px;
+}
+.day-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.day-add-button {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    font-size: 14px;
+}
+.day-timeline {
+    border-top: 1px solid #e7e2ef;
+    max-height: min(58dvh, 650px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.timeline-row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    min-height: 52px;
+}
+.timeline-hour {
+    padding: 7px 8px 0 0;
+    font-size: 12px;
+    color: #817b8d;
+    text-align: right;
+}
+.timeline-slot {
+    min-width: 0;
+    border-top: 1px solid #e7e2ef;
+    border-left: 1px solid #e7e2ef;
+    padding: 3px 5px;
+}
+.timeline-event {
+    display: grid;
+    gap: 3px;
+    margin-bottom: 4px;
+    padding: 8px 10px;
+    border-left: 3px solid #845ec2;
+    border-radius: 6px;
+    background: #f2eafa;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+}
+.timeline-event-heading {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+.timeline-event-time {
+    color: #665b77;
+}
+.event-location {
+    color: #6540a2;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.all-day-events {
+    display: grid;
+    gap: 6px;
+}
