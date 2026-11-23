@@ -19,7 +19,43 @@
 		<link href="./roles.css" rel="stylesheet"/>
 		<link href="./profil.css?v=49" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
-	</head>
+	<style>
+/* V53 : libellés des rôles dans la liste des amis. */
+.circle-member-button {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+.circle-member-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.circle-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background: rgba(155, 115, 220, 0.14);
+    border: 1px solid rgba(155, 115, 220, 0.35);
+}
+.circle-role-badge[data-role="administrateur"] {
+    border-color: rgba(245, 194, 85, 0.55);
+}
+.circle-role-badge[data-role="moderateur"] {
+    border-color: rgba(118, 175, 235, 0.55);
+}
+@media (max-width: 520px) {
+    .circle-role-badge {
+        font-size: 0.78rem;
+        white-space: normal;
+    }
+}
+</style>
+</head>
 	<body>
 		<section class="auth-screen" id="authScreen">
 			<div class="auth-card">
@@ -199,9 +235,9 @@
                             <label for="circleMemberFilter">Afficher</label>
                             <select id="circleMemberFilter">
                                 <option value="tous">Tous les membres</option>
-                                <option value="administrateur">Administrateurs</option>
-                                <option value="moderateur">Modérateurs</option>
-                                <option value="membre">Membres</option>
+                                <option value="administrateur">👑 Administrateurs</option>
+                                <option value="moderateur">🛡️ Modérateurs</option>
+                                <option value="membre">👤 Membres</option>
                             </select>
                         </div>
                         <div id="membersList"></div>
@@ -221,11 +257,11 @@
 								<legend>Rôle de la personne invitée</legend>
 								<label class="invitation-role-choice">
 									<input type="radio" name="role" value="membre" checked="checked"/>
-									<span>Membre</span>
+									<span>👤 Membre</span>
 								</label>
 								<label class="invitation-role-choice">
 									<input type="radio" name="role" value="administrateur"/>
-									<span>Administrateur</span>
+									<span>👑 Administrateur</span>
 								</label>
 							</fieldset>
 							<button class="btn" type="submit">
@@ -265,11 +301,11 @@
 <script defer src="./app.js?v=46">
 		</script>
 		
-		<script src="./auth.js?v=51" type="module">
+		<script src="./auth.js?v=53" type="module">
 		</script>
         <script src="./profil-informations.js?v=47" type="module"></script>
         <script src="./cercle-profils.js?v=51" type="module"></script>
-        <script src="./cercle-administration.js?v=52" type="module"></script>
+        <script src="./cercle-administration.js?v=53" type="module"></script>
 	</body>
 </html>
 

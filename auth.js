@@ -116,12 +116,29 @@ async function loadMembers() {
             if (signed?.signedUrl) avatar.src = signed.signedUrl;
         }
         memberButton.append(avatar);
-        memberButton.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : member.role === 'moderateur' ? 'modérateur' : 'membre'}`));
+        const storedName = String(names.get(member.utilisateur_id) || '').trim();
+        const displayName = storedName && storedName !== 'Membre'
+            ? storedName
+            : 'Prénom à renseigner';
+        const ownLabel = member.utilisateur_id === currentUser?.id
+            ? `${displayName} (moi)`
+            : displayName;
+        const roleLabels = {
+            administrateur: '👑 Administrateur',
+            moderateur: '🛡️ Modérateur',
+            membre: '👤 Membre'
+        };
+        const nameNode = textElement('span', ownLabel);
+        nameNode.className = 'circle-member-name';
+        const roleNode = textElement('span', roleLabels[member.role] || '👤 Membre');
+        roleNode.className = 'circle-role-badge';
+        roleNode.dataset.role = member.role;
+        memberButton.append(nameNode, roleNode);
         row.append(memberButton);
         visibleMembers.push({
             row,
             role: member.role,
-            name: names.get(member.utilisateur_id)?.trim() || 'Prénom à renseigner'
+            name: displayName
         });
         // Le retrait sera réactivé après livraison d'une fonction serveur auditée.
         list.append(row);
@@ -152,7 +169,7 @@ async function loadMembers() {
     update();
     window.dispatchEvent(new CustomEvent('zouzous:members-loaded', {
         detail: { client: supabase, groupId, role, ownId: currentUser?.id, members: membresUniques.map(member => ({
-            id: member.utilisateur_id, role: member.role, name: names.get(member.utilisateur_id) || 'Membre'
+            id: member.utilisateur_id, role: member.role, name: (String(names.get(member.utilisateur_id) || '').trim() && String(names.get(member.utilisateur_id)).trim() !== 'Membre') ? String(names.get(member.utilisateur_id)).trim() : 'Prénom à renseigner'
         })) }
     }));
 }
