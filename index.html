@@ -200,6 +200,7 @@
                             <select id="circleMemberFilter">
                                 <option value="tous">Tous les membres</option>
                                 <option value="administrateur">Administrateurs</option>
+                                <option value="moderateur">Modérateurs</option>
                                 <option value="membre">Membres</option>
                             </select>
                         </div>
@@ -236,7 +237,7 @@
                         </section>
                         <section class="card circle-roles-card" id="circleRolesCard">
                             <h3><img class="z-icon" src="./icones/compte-premium.png" alt="" /> Gestion du cercle</h3>
-                            <p class="sub">Consultez les membres actifs et leurs rôles. Les invitations sont réservées aux administrateurs.
+                            <p class="sub">Consultez les membres actifs et leurs rôles. Les administrateurs gèrent les invitations et les rôles.
                             <span id="circleRoleSummary" class="circle-role-summary"></span></p>
                             <div id="circleRoleActions" class="circle-admin-list" hidden></div>
                             <p id="circleRoleMessage" role="status" aria-live="polite"></p>
@@ -268,7 +269,7 @@
 		</script>
         <script src="./profil-informations.js?v=47" type="module"></script>
         <script src="./cercle-profils.js?v=51" type="module"></script>
-        <script src="./cercle-administration.js?v=51" type="module"></script>
+        <script src="./cercle-administration.js?v=52" type="module"></script>
 	</body>
 </html>
 

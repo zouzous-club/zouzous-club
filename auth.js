@@ -116,7 +116,7 @@ async function loadMembers() {
             if (signed?.signedUrl) avatar.src = signed.signedUrl;
         }
         memberButton.append(avatar);
-        memberButton.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : 'membre'}`));
+        memberButton.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : member.role === 'moderateur' ? 'modérateur' : 'membre'}`));
         row.append(memberButton);
         visibleMembers.push({
             row,
@@ -146,7 +146,8 @@ async function loadMembers() {
     if (filter) filter.onchange = update;
     if (summary) {
         const admins = visibleMembers.filter(member => member.role === 'administrateur').length;
-        summary.textContent = `${visibleMembers.length} membre(s) actif(s), dont ${admins} administrateur(s).`;
+        const moderators = visibleMembers.filter(member => member.role === 'moderateur').length;
+        summary.textContent = `${visibleMembers.length} membre(s) actif(s), dont ${admins} administrateur(s) et ${moderators} modérateur(s).`;
     }
     update();
     window.dispatchEvent(new CustomEvent('zouzous:members-loaded', {
@@ -193,7 +194,7 @@ async function applyMembership(membership) {
     groupId = membership.groupe_id;
     role = membership.role;
     $('memberStatus').textContent = `${membership.groupes?.nom || 'Zouzous Club'} · Membres actifs`;
-    $('memberRole').textContent = role === 'administrateur' ? 'Administrateur' : 'Membre';
+    $('memberRole').textContent = role === 'administrateur' ? 'Administrateur' : role === 'moderateur' ? 'Modérateur' : 'Membre';
     $('invitePanel').hidden = role !== 'administrateur';
     $('memberPanel').hidden = false;
     setAccess(true);

@@ -44,7 +44,7 @@ async function circleAdminLoadInvitations() {
         const details = circleAdminNode('div', '', 'circle-admin-details');
         details.append(circleAdminNode('strong', invitation.email));
         const expired = invitation.expire_le && new Date(invitation.expire_le) < new Date();
-        details.append(circleAdminNode('small', `${invitation.role_attribue === 'administrateur' ? 'Administrateur' : 'Membre'} · ${expired ? 'Expirée' : 'En attente'}`));
+        details.append(circleAdminNode('small', `${invitation.role_attribue === 'administrateur' ? 'Administrateur' : invitation.role_attribue === 'moderateur' ? 'Modérateur' : 'Membre'} · ${expired ? 'Expirée' : 'En attente'}`));
         const button = circleAdminNode('button', 'Annuler', 'btn secondary');
         button.type = 'button';
         button.addEventListener('click', () => circleAdminConfirmCancel(invitation, row));
@@ -95,8 +95,8 @@ function circleAdminRenderRoles() {
         const label = circleAdminNode('label', member.name, 'circle-admin-details');
         const select = document.createElement('select');
         select.setAttribute('aria-label', `Rôle de ${member.name}`);
-        for (const value of ['membre', 'administrateur']) {
-            const option = circleAdminNode('option', value === 'membre' ? 'Membre' : 'Administrateur');
+        for (const value of ['membre', 'moderateur', 'administrateur']) {
+            const option = circleAdminNode('option', value === 'membre' ? 'Membre' : value === 'moderateur' ? 'Modérateur' : 'Administrateur');
             option.value = value;
             select.append(option);
         }
@@ -127,7 +127,7 @@ function circleAdminConfirmRole(member, select, row) {
     });
     yes.addEventListener('click', async () => {
         yes.disabled = true;
-        const { error } = await circleAdminContext.client.rpc('modifier_role_membre_cercle_v50', {
+        const { error } = await circleAdminContext.client.rpc('modifier_role_membre_cercle_v52', {
             p_groupe_id: circleAdminContext.groupId,
             p_utilisateur_id: member.id,
             p_nouveau_role: desired
