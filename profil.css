@@ -126,3 +126,32 @@
     border-top: 0;
     padding-top: 19px;
 }
+
+
+/* V49 : recherche et filtrage dans le cartouche Mes amis. */
+.circle-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 14px;
+    margin: 16px 0 10px;
+}
+.circle-filters label { font-weight: 650; }
+.circle-filters input, .circle-filters select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 12px;
+    font: inherit;
+}
+.circle-filters label:nth-of-type(1) { grid-column: 1; grid-row: 1; }
+.circle-filters label:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+.circle-filters input { grid-column: 1; grid-row: 2; }
+.circle-filters select { grid-column: 2; grid-row: 2; }
+.circle-member-row[hidden], #circleEmptyMessage[hidden] { display: none !important; }
+.circle-role-summary { display: block; margin-top: 12px; }
+@media (max-width: 520px) {
+    .circle-filters { grid-template-columns: minmax(0, 1fr); }
+    .circle-filters label:nth-of-type(1), .circle-filters label:nth-of-type(2),
+    .circle-filters input, .circle-filters select { grid-column: 1; grid-row: auto; }
+}

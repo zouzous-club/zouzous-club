@@ -17,7 +17,7 @@
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
 		<link href="./styles.css?v=45-connexion-corrigee" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
-		<link href="./profil.css?v=48" rel="stylesheet"/>
+		<link href="./profil.css?v=49" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
 	</head>
 	<body>
@@ -193,7 +193,18 @@
                         <h3><img class="z-icon" src="./icones/utilisateurs.png" alt="" /> Mes amis</h3>
                         <p class="sub">Retrouvez les zouzous de votre groupe et consultez leur profil.</p>
                         <p id="memberStatus"></p>
+                        <div class="circle-filters" aria-label="Rechercher parmi mes amis">
+                            <label for="circleMemberSearch">Rechercher un ami</label>
+                            <input id="circleMemberSearch" type="search" placeholder="Pseudo ou prénom…" autocomplete="off" />
+                            <label for="circleMemberFilter">Afficher</label>
+                            <select id="circleMemberFilter">
+                                <option value="tous">Tous les membres</option>
+                                <option value="administrateur">Administrateurs</option>
+                                <option value="membre">Membres</option>
+                            </select>
+                        </div>
                         <div id="membersList"></div>
+                        <p id="circleEmptyMessage" class="sub" hidden>Aucun ami ne correspond à cette recherche.</p>
                     </section>
                     <section id="circleMemberProfile" class="card circle-member-profile" hidden aria-live="polite"></section>
                     <section id="memberPanel" class="circle-management" hidden>
@@ -225,7 +236,8 @@
                         </section>
                         <section class="card circle-roles-card" id="circleRolesCard">
                             <h3><img class="z-icon" src="./icones/compte-premium.png" alt="" /> Gestion du cercle</h3>
-                            <p class="sub">Les rôles et accès des membres sont indiqués dans la liste des amis. Les invitations sont réservées aux administrateurs.</p>
+                            <p class="sub">Consultez les membres actifs et leurs rôles. Les invitations sont réservées aux administrateurs.
+                            <span id="circleRoleSummary" class="circle-role-summary"></span></p>
                         </section>
                     </section>
                 </section>
@@ -245,10 +257,10 @@
 <script defer src="./app.js?v=46">
 		</script>
 		
-		<script src="./auth.js?v=46" type="module">
+		<script src="./auth.js?v=49" type="module">
 		</script>
         <script src="./profil-informations.js?v=47" type="module"></script>
-        <script src="./cercle-profils.js?v=47" type="module"></script>
+        <script src="./cercle-profils.js?v=49" type="module"></script>
 	</body>
 </html>
 

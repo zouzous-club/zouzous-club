@@ -90,6 +90,7 @@ async function loadMembers() {
     .eq('statut', 'actif');
     const list = $('membersList');
     list.replaceChildren();
+    const visibleMembers = [];
     if (error) {
         list.textContent = 'Impossible de charger les membres.';
         return;
@@ -117,9 +118,37 @@ async function loadMembers() {
         memberButton.append(avatar);
         memberButton.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : 'membre'}`));
         row.append(memberButton);
+        visibleMembers.push({
+            row,
+            role: member.role,
+            name: names.get(member.utilisateur_id)?.trim() || 'Prénom à renseigner'
+        });
         // Le retrait sera réactivé après livraison d'une fonction serveur auditée.
         list.append(row);
     }
+    const search = $('circleMemberSearch');
+    const filter = $('circleMemberFilter');
+    const empty = $('circleEmptyMessage');
+    const summary = $('circleRoleSummary');
+    const update = () => {
+        const query = (search?.value || '').trim().toLocaleLowerCase('fr');
+        const selectedRole = filter?.value || 'tous';
+        let count = 0;
+        for (const member of visibleMembers) {
+            const matches = (!query || member.name.toLocaleLowerCase('fr').includes(query)) &&
+                (selectedRole === 'tous' || member.role === selectedRole);
+            member.row.hidden = !matches;
+            if (matches) count++;
+        }
+        if (empty) empty.hidden = count > 0;
+    };
+    if (search) search.oninput = update;
+    if (filter) filter.onchange = update;
+    if (summary) {
+        const admins = visibleMembers.filter(member => member.role === 'administrateur').length;
+        summary.textContent = `${visibleMembers.length} membre(s) actif(s), dont ${admins} administrateur(s).`;
+    }
+    update();
 }
 async function loadMembership() {
     const { data, error } = await supabase.from('membres_groupes')
