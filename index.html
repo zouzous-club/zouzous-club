@@ -238,6 +238,13 @@
                             <h3><img class="z-icon" src="./icones/compte-premium.png" alt="" /> Gestion du cercle</h3>
                             <p class="sub">Consultez les membres actifs et leurs rôles. Les invitations sont réservées aux administrateurs.
                             <span id="circleRoleSummary" class="circle-role-summary"></span></p>
+                            <div id="circleRoleActions" class="circle-admin-list" hidden></div>
+                            <p id="circleRoleMessage" role="status" aria-live="polite"></p>
+                        </section>
+                        <section class="card" id="circlePendingCard" hidden>
+                            <h3><img class="z-icon" src="./icones/ajout-dutilisateur.png" alt="" /> Invitations en attente</h3>
+                            <div id="circlePendingList"></div>
+                            <p id="circlePendingMessage" role="status" aria-live="polite"></p>
                         </section>
                     </section>
                 </section>
@@ -257,10 +264,11 @@
 <script defer src="./app.js?v=46">
 		</script>
 		
-		<script src="./auth.js?v=49" type="module">
+		<script src="./auth.js?v=51" type="module">
 		</script>
         <script src="./profil-informations.js?v=47" type="module"></script>
-        <script src="./cercle-profils.js?v=49" type="module"></script>
+        <script src="./cercle-profils.js?v=51" type="module"></script>
+        <script src="./cercle-administration.js?v=51" type="module"></script>
 	</body>
 </html>
 

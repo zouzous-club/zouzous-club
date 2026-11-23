@@ -155,3 +155,14 @@
     .circle-filters label:nth-of-type(1), .circle-filters label:nth-of-type(2),
     .circle-filters input, .circle-filters select { grid-column: 1; grid-row: auto; }
 }
+
+/* V51 — Gestion des rôles et invitations, sans encadrement supplémentaire. */
+.circle-admin-list { display: grid; gap: 10px; margin-top: 16px; }
+.circle-admin-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(150, 150, 150, .18); }
+.circle-admin-details { display: grid; flex: 1 1 180px; min-width: 0; gap: 4px; overflow-wrap: anywhere; }
+.circle-admin-details small { opacity: .75; }
+.circle-admin-row select { min-width: 140px; max-width: 100%; padding: 10px; border-radius: 10px; }
+.circle-admin-confirm { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; }
+.circle-admin-confirm p { flex-basis: 100%; margin: 0; }
+#circlePendingCard[hidden], #circleRoleActions[hidden] { display: none !important; }
+@media (max-width: 520px) { .circle-admin-row select { flex: 1 1 140px; } }

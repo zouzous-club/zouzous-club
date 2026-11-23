@@ -149,6 +149,11 @@ async function loadMembers() {
         summary.textContent = `${visibleMembers.length} membre(s) actif(s), dont ${admins} administrateur(s).`;
     }
     update();
+    window.dispatchEvent(new CustomEvent('zouzous:members-loaded', {
+        detail: { client: supabase, groupId, role, ownId: currentUser?.id, members: membresUniques.map(member => ({
+            id: member.utilisateur_id, role: member.role, name: names.get(member.utilisateur_id) || 'Membre'
+        })) }
+    }));
 }
 async function loadMembership() {
     const { data, error } = await supabase.from('membres_groupes')
@@ -314,6 +319,7 @@ $('inviteForm').addEventListener('submit', async (event) => {
         throw error || new Error(data?.erreur || 'INVITATION_REFUSEE');
         $('inviteMessage').textContent = 'Invitation envoyée. Elle reste valable 7 jours.';
         event.currentTarget.reset();
+        window.dispatchEvent(new CustomEvent('zouzous:invitations-changed')); 
     }
     catch {
         $('inviteMessage').textContent = 'Invitation impossible : vérifier la configuration ou le compte invité.';
