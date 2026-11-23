@@ -212,7 +212,19 @@ async function applyMembership(membership) {
     role = membership.role;
     $('memberStatus').textContent = `${membership.groupes?.nom || 'Zouzous Club'} · Membres actifs`;
     $('memberRole').textContent = role === 'administrateur' ? 'Administrateur' : role === 'moderateur' ? 'Modérateur' : 'Membre';
-    $('invitePanel').hidden = role !== 'administrateur';
+    $('invitePanel').hidden = !['administrateur', 'moderateur'].includes(role);
+    const adminRoleChoice = document.querySelector('#inviteForm input[name="role"][value="administrateur"]');
+    const moderatorRoleChoice = document.querySelector('#inviteForm input[name="role"][value="moderateur"]');
+    if (adminRoleChoice) {
+        adminRoleChoice.closest('label').hidden = role !== 'administrateur';
+    }
+    if (moderatorRoleChoice) {
+        moderatorRoleChoice.closest('label').hidden = role !== 'administrateur';
+    }
+    const memberRoleChoice = document.querySelector('#inviteForm input[name="role"][value="membre"]');
+    if (memberRoleChoice) {
+        memberRoleChoice.checked = true;
+    }
     $('memberPanel').hidden = false;
     setAccess(true);
     window.dispatchEvent(new CustomEvent('zouzous:membership', {
@@ -308,6 +320,12 @@ $('passwordForm').addEventListener('submit', async (event) => {
 $('resetForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = String(new FormData(event.currentTarget).get('email')).trim();
+    const invitedRole = String(new FormData(event.currentTarget).get('role') || 'membre');
+    if (role === 'moderateur' && invitedRole !== 'membre') {
+        $('inviteMessage').textContent = 'Un modérateur peut inviter uniquement des membres.';
+        button.disabled = false;
+        return;
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${location.origin}${location.pathname}`,
     });
@@ -325,12 +343,18 @@ $('inviteForm').addEventListener('submit', async (event) => {
     const button = event.currentTarget.querySelector('button[type="submit"]');
     button.disabled = true;
     const email = String(new FormData(event.currentTarget).get('email')).trim();
+    const invitedRole = String(new FormData(event.currentTarget).get('role') || 'membre');
+    if (role === 'moderateur' && invitedRole !== 'membre') {
+        $('inviteMessage').textContent = 'Un modérateur peut inviter uniquement des membres.';
+        button.disabled = false;
+        return;
+    }
     try {
         const { data, error } = await supabase.functions.invoke('inviter-membre', {
             body: {
                 groupe_id: groupId,
                 email,
-                role: String(new FormData(event.currentTarget).get('role') || 'membre')
+                role: invitedRole
             },
         });
         if (error || !data?.ok)
