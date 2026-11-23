@@ -17,7 +17,7 @@
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
 		<link href="./styles.css?v=45-connexion-corrigee" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
-		<link href="./profil.css?v=46" rel="stylesheet"/>
+		<link href="./profil.css?v=47" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
 	</head>
 	<body>
@@ -125,10 +125,10 @@
                         <section class="card profile-public-details">
                             <h3>À propos de moi</h3>
                             <dl>
-                                <div><dt>Anniversaire</dt><dd id="profilePublicBirthday">Non renseigné</dd></div>
-                                <div><dt>Ville</dt><dd id="profilePublicCity">Non renseignée</dd></div>
-                                <div><dt>Présentation</dt><dd id="profilePublicBio">Aucune présentation pour le moment.</dd></div>
-                                <div><dt>Centres d’intérêt</dt><dd id="profilePublicInterests">Non renseignés</dd></div>
+                                <div><dt><img class="z-icon" src="./icones/gateau-danniversaire.png" alt="" /> Anniversaire</dt><dd id="profilePublicBirthday">Non renseigné</dd></div>
+                                <div><dt><img class="z-icon" src="./icones/marqueur.png" alt="" /> Ville</dt><dd id="profilePublicCity">Non renseignée</dd></div>
+                                <div><dt><img class="z-icon" src="./icones/utilisateur-domestique.png" alt="" /> Présentation</dt><dd id="profilePublicBio">Aucune présentation pour le moment.</dd></div>
+                                <div><dt><img class="z-icon" src="./icones/coeur.png" alt="" /> Centres d’intérêt</dt><dd id="profilePublicInterests">Non renseignés</dd></div>
                             </dl>
                         </section>
                     </section>
@@ -140,7 +140,7 @@
                         </div>
                     </section>
                     <section class="card">
-                        <h3>Mes informations</h3>
+                        <h3><img class="z-icon" src="./icones/utilisateur-domestique.png" alt="" /> Mes informations</h3>
                         <form id="profileV44Form" class="form">
                             <label for="profilePseudo">Pseudonyme *</label>
                             <input id="profilePseudo" maxlength="60" required autocomplete="nickname" placeholder="Votre pseudo" />
@@ -157,7 +157,7 @@
                         <p id="profileV44Status" role="status" aria-live="polite"></p>
                     </section>
                     <section class="card">
-                        <h3>Photo de profil</h3>
+                        <h3><img class="z-icon" src="./icones/utilisateur-domestique.png" alt="" /> Photo de profil</h3>
                         <p class="sub">Image JPG, PNG ou WebP, 3 Mo maximum. Visible par les membres de votre groupe.</p>
                         <label for="profilePhoto">Choisir une photo</label>
                         <input id="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp" />
@@ -165,7 +165,7 @@
                         <p id="profilePhotoStatus" role="status" aria-live="polite"></p>
                     </section>
                     <section class="card">
-                        <h3>Apparence de l’application</h3>
+                        <h3><img class="z-icon" src="./icones/palette.png" alt="" /> Apparence de l’application</h3>
                         <label class="theme-setting-label" for="themePreference">Thème</label>
                         <select id="themePreference" class="theme-preference">
                             <option value="auto">Automatique (selon l’appareil)</option>
@@ -174,37 +174,32 @@
                         </select>
                     </section>
                     <section class="card">
-                        <h3>🔔 Notifications</h3>
+                        <h3><img class="z-icon" src="./icones/cloche.png" alt="" /> Notifications</h3>
                         <label class="notification-preference"><input id="eventNotificationToggle" type="checkbox" /> M’avertir des nouveaux événements</label>
                         <p id="eventNotificationStatus" class="notification-status"></p>
                     </section>
                     <section class="card">
-                        <h3>Compte personnel</h3>
+                        <h3><img class="z-icon" src="./icones/compte-premium.png" alt="" /> Compte personnel</h3>
                         <p class="sub">Votre adresse e-mail de connexion reste privée. Le mot de passe n’est jamais affiché.</p>
                         <p id="profileAccountEmail"></p>
                         <button class="btn secondary" id="profilePasswordReset" type="button">Recevoir un lien pour changer mon mot de passe</button>
                         <p id="profilePasswordStatus" role="status" aria-live="polite"></p>
                     </section>
-                        <section class="card profile-account-actions"><h3>Session</h3><button class="btn secondary" id="logoutButton" type="button">Se déconnecter</button></section>
+                        <section class="card profile-account-actions"><h3><img class="z-icon" src="./icones/partir.png" alt="" /> Session</h3><button class="btn secondary" id="logoutButton" type="button">Se déconnecter</button></section>
                     </div>
                 </section>
 				<section id="profilePage" class="profile-page" hidden>
-					<section class="card profile-intro"><h3>Mes amis</h3><p>Retrouvez les zouzous de votre groupe et consultez leur profil.</p></section>
+					<section class="card circle-friends-card" id="circleFriendsCard">
+                        <h3><img class="z-icon" src="./icones/utilisateurs.png" alt="" /> Mes amis</h3>
+                        <p class="sub">Retrouvez les zouzous de votre groupe et consultez leur profil.</p>
+                        <p id="memberStatus"></p>
+                        <div id="membersList"></div>
+                    </section>
                     <section id="circleMemberProfile" class="card circle-member-profile" hidden aria-live="polite"></section>
-					<section class="card" id="memberPanel" hidden>
-					<h3>
-						🔐 Membres et accès
-					</h3>
-					<p id="memberStatus">
-					</p>
-					<p id="memberRole" hidden>
-					</p>
-					<div id="membersList">
-					</div>
-					<div hidden="" id="invitePanel">
-						<h3>
-							Inviter un zouzou
-						</h3>
+                    <section id="memberPanel" class="circle-management" hidden>
+                        <p id="memberRole" hidden></p>
+                        <section class="card" id="invitePanel" hidden>
+                            <h3><img class="z-icon" src="./icones/ajout-dutilisateur.png" alt="" /> Inviter un zouzou</h3>
 						<form class="form" id="inviteForm">
 							<label>
 								Adresse e-mail
@@ -227,10 +222,13 @@
 						</form>
 						<p id="inviteMessage" role="status">
 						</p>
-					</div>
-
-					</section>
-				</section>
+                        </section>
+                        <section class="card circle-roles-card" id="circleRolesCard">
+                            <h3><img class="z-icon" src="./icones/compte-premium.png" alt="" /> Gestion du cercle</h3>
+                            <p class="sub">Les rôles et accès des membres sont indiqués dans la liste des amis. Les invitations sont réservées aux administrateurs.</p>
+                        </section>
+                    </section>
+                </section>
 			</main>
 		</div>
 		<nav aria-label="Navigation mobile" class="tabs" id="mobileNav" hidden="">
@@ -249,8 +247,8 @@
 		
 		<script src="./auth.js?v=46" type="module">
 		</script>
-        <script src="./profil-informations.js?v=46" type="module"></script>
-        <script src="./cercle-profils.js?v=46" type="module"></script>
+        <script src="./profil-informations.js?v=47" type="module"></script>
+        <script src="./cercle-profils.js?v=47" type="module"></script>
 	</body>
 </html>
 

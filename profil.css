@@ -95,3 +95,15 @@
 .circle-member-profile .profile-avatar { width: 72px; height: 72px; }
 
 .circle-list-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid #D65DB1; margin-right: 12px; }
+
+/* V47 : séparation des amis, invitations et fiches membres. */
+.z-icon { display: inline-block; width: 23px; height: 23px; object-fit: contain; vertical-align: -5px; margin-right: 7px; flex: none; }
+.profile-page .card h3, .circle-member-profile dt, .profile-public-details dt { overflow-wrap: anywhere; }
+.circle-friends-card[hidden], .circle-management[hidden] { display: none !important; }
+.circle-management { display: grid; gap: 18px; }
+.circle-management > .card[hidden] { display: none !important; }
+.circle-friends-card #membersList { margin-top: 12px; }
+.circle-friends-card .circle-member-button { min-height: 68px; }
+.circle-friends-card .circle-member-button span { line-height: 1.4; }
+.circle-member-profile { scroll-margin-top: 16px; }
+@media (max-width: 700px) { .circle-management { gap: 12px; } .z-icon { width: 21px; height: 21px; } }

@@ -1,6 +1,8 @@
 // Consultation des fiches des membres actifs du cercle — V46.
 // Ne permet aucune modification du profil d'un autre membre.
 const panel = document.getElementById('circleMemberProfile');
+const friendsCard = document.getElementById('circleFriendsCard');
+const management = document.getElementById('memberPanel');
 let db = null;
 let groupId = null;
 let ownId = null;
@@ -23,7 +25,16 @@ function createText(tag, text, className) {
 
 function detail(list, label, value) {
     const row = document.createElement('div');
-    row.append(createText('dt', label), createText('dd', value));
+    const dt = createText('dt', label);
+    const icon = { 'Anniversaire': 'gateau-danniversaire.png', 'Ville': 'marqueur.png', 'Présentation': 'utilisateur-domestique.png', 'Centres d’intérêt': 'coeur.png' }[label];
+    if (icon) {
+        const img = document.createElement('img');
+        img.src = './icones/' + icon;
+        img.alt = '';
+        img.className = 'z-icon';
+        dt.prepend(img);
+    }
+    row.append(dt, createText('dd', value));
     list.append(row);
 }
 
@@ -31,6 +42,8 @@ async function openMember(id) {
     if (!db || !groupId || !id || !panel) return;
     panel.replaceChildren(createText('p', 'Chargement du profil…'));
     panel.hidden = false;
+    if (friendsCard) friendsCard.hidden = true;
+    if (management) management.hidden = true;
     try {
         // Vérification explicite de l'appartenance active au groupe courant.
         const { data: membership, error: memberError } = await db.from('membres_groupes')
@@ -46,7 +59,12 @@ async function openMember(id) {
         panel.replaceChildren();
         const back = createText('button', '← Retour aux amis', 'btn secondary');
         back.type = 'button';
-        back.addEventListener('click', () => { panel.hidden = true; panel.replaceChildren(); });
+        back.addEventListener('click', () => {
+            panel.hidden = true;
+            panel.replaceChildren();
+            if (friendsCard) friendsCard.hidden = false;
+            if (management) management.hidden = false;
+        });
         panel.append(back);
         const heading = document.createElement('div');
         heading.className = 'profile-heading';
@@ -84,6 +102,8 @@ window.addEventListener('zouzous:membership', async event => {
     groupId = event.detail?.groupId || null;
     panel.hidden = true;
     panel.replaceChildren();
+    if (friendsCard) friendsCard.hidden = false;
+    if (management) management.hidden = false;
     if (!db) { ownId = null; return; }
     const { data: { user } } = await db.auth.getUser();
     ownId = user?.id || null;
