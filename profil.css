@@ -107,3 +107,22 @@
 .circle-friends-card .circle-member-button span { line-height: 1.4; }
 .circle-member-profile { scroll-margin-top: 16px; }
 @media (max-width: 700px) { .circle-management { gap: 12px; } .z-icon { width: 21px; height: 21px; } }
+
+/* V48 : supprimer le cadre parasite autour des cartouches du cercle.
+   Le conteneur organise les sections sans devenir lui-même un cartouche. */
+#profilePage > #memberPanel,
+[data-theme="dark"] #profilePage > #memberPanel {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Chaque cartouche conserve sa propre bordure et son propre fond. */
+#profilePage #invitePanel {
+    border-top: 0;
+    padding-top: 19px;
+}
