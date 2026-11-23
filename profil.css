@@ -78,3 +78,20 @@
 .profile-public-details dt { font-weight: 700; margin-bottom: 6px; }
 .profile-public-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 @media (max-width: 700px) { #profilePublicView, #profileEditView { gap: 12px; } }
+
+/* V46 : cartouches indépendants, sans cadre extérieur. */
+.profile-page, #profilePublicView, #profileEditView { background: transparent !important; border: 0 !important; box-shadow: none !important; outline: 0 !important; padding: 0 !important; }
+.profile-page > :not(.card):not(#memberPanel):not(#circleMemberProfile),
+#profilePublicView, #profileEditView { min-width: 0; }
+.circle-member-button { display: flex; align-items: center; width: 100%; text-align: left; padding: 14px 6px; background: transparent; color: inherit; border: 0; border-bottom: 1px solid rgba(150,130,175,.25); cursor: pointer; font: inherit; }
+.circle-member-button:hover, .circle-member-button:focus-visible { background: rgba(132,94,194,.12); border-radius: 8px; }
+.circle-member-button span { overflow-wrap: anywhere; }
+.circle-member-profile[hidden] { display: none !important; }
+.circle-member-profile .profile-heading { margin: 10px 0 22px; }
+.circle-member-profile dl { display: grid; gap: 14px; margin: 0; }
+.circle-member-profile dl > div { border-bottom: 1px solid rgba(150,130,175,.25); padding-bottom: 12px; }
+.circle-member-profile dt { font-weight: 700; margin-bottom: 5px; }
+.circle-member-profile dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.circle-member-profile .profile-avatar { width: 72px; height: 72px; }
+
+.circle-list-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid #D65DB1; margin-right: 12px; }

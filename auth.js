@@ -94,13 +94,29 @@ async function loadMembers() {
         list.textContent = 'Impossible de charger les membres.';
         return;
     }
-    const { data: profiles } = await supabase.from('profils').select('id,prenom');
-    const names = new Map((profiles || []).map(profile => [profile.id, profile.prenom]));
+    const { data: profiles } = await supabase.from('profils').select('id,prenom,pseudo,avatar_url');
+    const names = new Map((profiles || []).map(profile => [profile.id, profile.pseudo || profile.prenom]));
+    const avatars = new Map((profiles || []).map(profile => [profile.id, profile.avatar_url]));
     const membresUniques = [...new Map((data || []).map(membre => [membre.utilisateur_id, membre])).values()];
     for (const member of membresUniques) {
         const row = document.createElement('div');
-        row.className = 'item row';
-        row.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : 'membre'}`));
+        row.className = 'circle-member-row';
+        const memberButton = document.createElement('button');
+        memberButton.type = 'button';
+        memberButton.className = 'circle-member-button';
+        memberButton.dataset.memberId = member.utilisateur_id;
+        const avatar = document.createElement('img');
+        avatar.className = 'circle-list-avatar';
+        avatar.src = './icon-192.png';
+        avatar.alt = '';
+        const avatarPath = avatars.get(member.utilisateur_id);
+        if (avatarPath) {
+            const { data: signed } = await supabase.storage.from('avatars-zouzous').createSignedUrl(avatarPath, 3600);
+            if (signed?.signedUrl) avatar.src = signed.signedUrl;
+        }
+        memberButton.append(avatar);
+        memberButton.append(textElement('span', `${member.utilisateur_id === currentUser?.id ? (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Moi') + ' (moi)' : (names.get(member.utilisateur_id)?.trim() && names.get(member.utilisateur_id)?.trim() !== 'Membre' ? names.get(member.utilisateur_id).trim() : 'Prénom à renseigner')} — ${member.role === 'administrateur' ? 'administrateur' : 'membre'}`));
+        row.append(memberButton);
         // Le retrait sera réactivé après livraison d'une fonction serveur auditée.
         list.append(row);
     }
@@ -142,7 +158,7 @@ async function loadMembership() {
 async function applyMembership(membership) {
     groupId = membership.groupe_id;
     role = membership.role;
-    $('memberStatus').textContent = `${membership.groupes?.nom || 'Zouzous Club'} · ${currentUser.email}`;
+    $('memberStatus').textContent = `${membership.groupes?.nom || 'Zouzous Club'} · Membres actifs`;
     $('memberRole').textContent = role === 'administrateur' ? 'Administrateur' : 'Membre';
     $('invitePanel').hidden = role !== 'administrateur';
     $('memberPanel').hidden = false;

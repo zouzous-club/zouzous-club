@@ -17,7 +17,7 @@
 		<link href="./icon-180.png" rel="apple-touch-icon" sizes="180x180"/>
 		<link href="./styles.css?v=45-connexion-corrigee" rel="stylesheet"/>
 		<link href="./roles.css" rel="stylesheet"/>
-		<link href="./profil.css?v=45" rel="stylesheet"/>
+		<link href="./profil.css?v=46" rel="stylesheet"/>
 		<link href="./navigation-icons.css" rel="stylesheet"/>
 	</head>
 	<body>
@@ -185,10 +185,12 @@
                         <button class="btn secondary" id="profilePasswordReset" type="button">Recevoir un lien pour changer mon mot de passe</button>
                         <p id="profilePasswordStatus" role="status" aria-live="polite"></p>
                     </section>
+                        <section class="card profile-account-actions"><h3>Session</h3><button class="btn secondary" id="logoutButton" type="button">Se déconnecter</button></section>
                     </div>
                 </section>
 				<section id="profilePage" class="profile-page" hidden>
-					<section class="card profile-intro"><h3>Mon cercle</h3><p>Retrouvez les membres et les accès de votre cercle.</p></section>
+					<section class="card profile-intro"><h3>Mes amis</h3><p>Retrouvez les zouzous de votre groupe et consultez leur profil.</p></section>
+                    <section id="circleMemberProfile" class="card circle-member-profile" hidden aria-live="polite"></section>
 					<section class="card" id="memberPanel" hidden>
 					<h3>
 						🔐 Membres et accès
@@ -226,9 +228,7 @@
 						<p id="inviteMessage" role="status">
 						</p>
 					</div>
-					<button class="btn secondary" id="logoutButton" type="button">
-						Se déconnecter
-					</button>
+
 					</section>
 				</section>
 			</main>
@@ -244,12 +244,13 @@
 		<div id="editorBody"></div>
 	</div>
 </div>
-<script defer src="./app.js?v=45">
+<script defer src="./app.js?v=46">
 		</script>
 		
-		<script src="./auth.js?v=44-connexion-corrigee" type="module">
+		<script src="./auth.js?v=46" type="module">
 		</script>
-        <script src="./profil-informations.js?v=45" type="module"></script>
+        <script src="./profil-informations.js?v=46" type="module"></script>
+        <script src="./cercle-profils.js?v=46" type="module"></script>
 	</body>
 </html>
 
