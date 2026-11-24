@@ -176,6 +176,7 @@ async function loadMembers() {
 async function loadMembership() {
     const { data, error } = await supabase.from('membres_groupes')
     .select('groupe_id,role,statut,groupes(nom)')
+    .eq('utilisateur_id', currentUser.id)
     .eq('statut', 'actif')
     .limit(20);
     if (error)
@@ -187,7 +188,8 @@ async function loadMembership() {
             const { data: activatedMembership, error: reloadError } = await supabase
                 .from('membres_groupes')
                 .select('groupe_id,role,statut,groupes(nom)')
-                .eq('statut', 'actif')
+                .eq('utilisateur_id', currentUser.id)
+    .eq('statut', 'actif')
                 .limit(20);
 
             if (!reloadError && activatedMembership?.length) {
@@ -217,9 +219,11 @@ async function applyMembership(membership) {
     const moderatorRoleChoice = document.querySelector('#inviteForm input[name="role"][value="moderateur"]');
     if (adminRoleChoice) {
         adminRoleChoice.closest('label').hidden = role !== 'administrateur';
+        adminRoleChoice.disabled = role !== 'administrateur';
     }
     if (moderatorRoleChoice) {
         moderatorRoleChoice.closest('label').hidden = role !== 'administrateur';
+        moderatorRoleChoice.disabled = role !== 'administrateur';
     }
     const memberRoleChoice = document.querySelector('#inviteForm input[name="role"][value="membre"]');
     if (memberRoleChoice) {
@@ -320,12 +324,6 @@ $('passwordForm').addEventListener('submit', async (event) => {
 $('resetForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const email = String(new FormData(event.currentTarget).get('email')).trim();
-    const invitedRole = String(new FormData(event.currentTarget).get('role') || 'membre');
-    if (role === 'moderateur' && invitedRole !== 'membre') {
-        $('inviteMessage').textContent = 'Un modérateur peut inviter uniquement des membres.';
-        button.disabled = false;
-        return;
-    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${location.origin}${location.pathname}`,
     });
@@ -340,11 +338,12 @@ $('logoutButton').addEventListener('click', async () => {
 });
 $('inviteForm').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const button = event.currentTarget.querySelector('button[type="submit"]');
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
     button.disabled = true;
     const email = String(new FormData(event.currentTarget).get('email')).trim();
     const invitedRole = String(new FormData(event.currentTarget).get('role') || 'membre');
-    if (role === 'moderateur' && invitedRole !== 'membre') {
+    if (!['administrateur', 'moderateur'].includes(role) || (role === 'moderateur' && invitedRole !== 'membre')) {
         $('inviteMessage').textContent = 'Un modérateur peut inviter uniquement des membres.';
         button.disabled = false;
         return;
@@ -360,7 +359,7 @@ $('inviteForm').addEventListener('submit', async (event) => {
         if (error || !data?.ok)
         throw error || new Error(data?.erreur || 'INVITATION_REFUSEE');
         $('inviteMessage').textContent = 'Invitation envoyée. Elle reste valable 7 jours.';
-        event.currentTarget.reset();
+        form.reset();
         window.dispatchEvent(new CustomEvent('zouzous:invitations-changed')); 
     }
     catch {

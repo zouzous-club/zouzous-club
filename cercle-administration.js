@@ -1,4 +1,4 @@
-// Administration du cercle : rôles et invitations — V53.
+// Administration du cercle : rôles et invitations — V55.
 // Les autorisations sont vérifiées côté Supabase, jamais uniquement dans l'interface.
 let circleAdminContext = null;
 
@@ -92,7 +92,7 @@ function circleAdminRenderRoles() {
     const list = document.getElementById('circleRoleActions');
     if (!list) return;
     list.replaceChildren();
-    if (!circleAdminContext || circleAdminContext.role !== 'administrateur') {
+    if (!circleAdminContext) {
         list.hidden = true;
         return;
     }
@@ -102,6 +102,13 @@ function circleAdminRenderRoles() {
     for (const member of members) {
         const row = circleAdminNode('div', '', 'circle-admin-row');
         const label = circleAdminNode('label', member.name, 'circle-admin-details');
+        if (circleAdminContext.role !== 'administrateur') {
+            const badge = circleAdminNode('span', circleRoleLabel(member.role), 'circle-role-badge');
+            badge.dataset.role = member.role;
+            row.append(label, badge);
+            list.append(row);
+            continue;
+        }
         const select = document.createElement('select');
         select.setAttribute('aria-label', `Rôle de ${member.name}`);
         for (const value of ['membre', 'moderateur', 'administrateur']) {
@@ -121,6 +128,7 @@ function circleAdminRenderRoles() {
 }
 
 function circleAdminConfirmRole(member, select, row) {
+    if (circleAdminContext?.role !== 'administrateur') return;
     row.querySelector('.circle-admin-confirm')?.remove();
     const desired = select.value;
     if (desired === member.role) return;
